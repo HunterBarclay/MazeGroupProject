@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+    NEEDS TANGENT VECTORS:
+    Use this:
+    float3 ws_normal = tangent * ts_normal.x + binormal * ts_normal.y + normal * ts_normal.z;
+    // CREDIT - https://forum.beyond3d.com/threads/how-to-convert-tangent-space-normal-to-world-space.48001/
+-->
+
+<head>
+    <meta charset="utf-8" />
+    <title>Hello WebGL</title>
+    <meta name="generator" content="BBEdit 10.5" />
+
+    <!-- load matrix manipulation helper methods -->
+    <script type="text/javascript" src="glMatrix_util.js"></script>
+    <script type="text/javascript" src="webgl-utils.js"></script>
+    <script type="text/javascript" src="mesh-gen.js"></script>
+    <script type="text/javascript" src="js/renderer.js"></script>
+
+    <!-- define our shaders -->
+    <script id="shader-fs" type="x-shader/x-fragment" src="shaders/test_fs.glsl"></script>
+    <script id="shader-vs" type="x-shader/x-vertex" src="shaders/test_vs.glsl"></script>
+
+    <script>
+        <!-- TODO -->
+    </script>
+
+</head>
+
+<!-- declare the "body" of the HTML document-->
+<!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
+
+<body>
+    <h1>Hello WebGL Simple Example</h1>
+
+    <!-- embed the HTML5 Canvas Drawing object on the page.-->
+    <!-- Name the canvas 'hellowebgl' for the javascript code. -->
+    <canvas id="hellowebgl" width=640 height=480>
+        If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
+    </canvas>
+
+    <h3>Click and Hold Left-Click and look from left to right. WASD to move</h3>
+    <p id="cam-position">...</p>
+
+</body>
+
+</html>
