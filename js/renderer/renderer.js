@@ -1,7 +1,8 @@
-// On Load
-window.addEventListener("load", (_) => {
-    startHelloWebGL();
-});
+import { 
+    generateGrid, addVector, multVector, magnitudeVector,
+    makePerpendicular, normalizeVector, toRadians,
+    crossProductVector, gridSize
+} from "../mesh-gen.js";
 
 var gl;
 
@@ -153,6 +154,7 @@ function generateViewMatrix(eyePos, lookDir = [0.0, 0.0, -1.0], up = [0.0, 1.0, 
 var cubeVertexPositionBuffer;
 var cubeVertexTextureCoordBuffer;
 var cubeVertexIndexBuffer;
+var cubeVertexNormalBuffer;
 
 var normalBuffer;
 
@@ -492,3 +494,7 @@ function onKeyUp(event) {
 function setPosition(pos) {
     document.getElementById("cam-position").innerHTML = "(" + pos[0] + ", " + pos[1] + ", " + pos[2] + ")";
 }
+
+// EXPORTS
+
+export default startHelloWebGL;

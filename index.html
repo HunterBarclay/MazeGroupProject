@@ -10,14 +10,15 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Hello WebGL</title>
+    <title>Maze</title>
     <meta name="generator" content="BBEdit 10.5" />
 
     <!-- load matrix manipulation helper methods -->
-    <script type="text/javascript" src="glMatrix_util.js"></script>
-    <script type="text/javascript" src="webgl-utils.js"></script>
-    <script type="text/javascript" src="mesh-gen.js"></script>
-    <script type="text/javascript" src="js/renderer.js"></script>
+    <script type="module" src="js/app.mjs"></script>
+    <script type="text/javascript" src="js/glMatrix_util.js"></script>
+    <script type="text/javascript" src="js/webgl-utils.js"></script>
+    <!-- <script type="text/javascript" src="js/mesh-gen.js"></script> -->
+    <!-- <script type="text/javascript" src="js/renderer/renderer.js"></script> -->
 
     <!-- define our shaders -->
     <script id="shader-fs" type="x-shader/x-fragment" src="shaders/test_fs.glsl"></script>

@@ -1,6 +1,6 @@
-const gridSize = 128;
+export const gridSize = 128;
 
-function magnitudeVector(v) {
+export function magnitudeVector(v) {
     return Math.sqrt(
         v[0] * v[0]
         + v[1] * v[1]
@@ -8,7 +8,7 @@ function magnitudeVector(v) {
     );
 }
 
-function normalizeVector(v) {
+export function normalizeVector(v) {
     var mag = magnitudeVector(v);
     if (Math.abs(mag) < 0.000001) {
         return [0.0, 0.0, 0.0];
@@ -20,7 +20,7 @@ function normalizeVector(v) {
     ];
 }
 
-function subtractVector(a, b) {
+export function subtractVector(a, b) {
     return [
         a[0] - b[0],
         a[1] - b[1],
@@ -28,7 +28,7 @@ function subtractVector(a, b) {
     ];
 }
 
-function addVector(a, b) {
+export function addVector(a, b) {
     return [
         a[0] + b[0],
         a[1] + b[1],
@@ -36,7 +36,7 @@ function addVector(a, b) {
     ];
 }
 
-function multVector(a, b) {
+export function multVector(a, b) {
     return [
         a[0] * b,
         a[1] * b,
@@ -44,7 +44,7 @@ function multVector(a, b) {
     ];
 }
 
-function crossProductVector(a, b) {
+export function crossProductVector(a, b) {
     return [
         a[1] * b[2] - a[2] * b[1],
         a[2] * b[0] - a[0] * b[2],
@@ -52,11 +52,11 @@ function crossProductVector(a, b) {
     ];
 }
 
-function dotProductVector(a, b) {
+export function dotProductVector(a, b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-function makePerpendicular(axis, vec) {
+export function makePerpendicular(axis, vec) {
     axis = normalizeVector(axis);
     if (Math.abs(dotProductVector(axis, normalizeVector(vec)) - 1.0) < 0.00001) {
         console.error("Way too close:\n" + axis + "\n" + vec);
@@ -71,11 +71,11 @@ function makePerpendicular(axis, vec) {
     return vec;
 }
 
-function toRadians(a) {
+export function toRadians(a) {
     return a / 180 * Math.PI;
 }
 
-function generateNormalsOfTriangle(v1, v2, v3) {
+export function generateNormalsOfTriangle(v1, v2, v3) {
     // CREDIT: https://computergraphics.stackexchange.com/questions/4031/programmatically-generating-vertex-normals
     var normal = normalizeVector(crossProductVector(subtractVector(v2, v1), subtractVector(v3, v1)));
     return [
@@ -83,7 +83,7 @@ function generateNormalsOfTriangle(v1, v2, v3) {
     ];
 }
 
-function generateNormals(vertices, indices) {
+export function generateNormals(vertices, indices) {
     var normals = new Array(vertices.length);
 
     for (var i = 0; i < indices.length; i += 3) {
@@ -106,15 +106,15 @@ function generateNormals(vertices, indices) {
     return normals;
 }
 
-function mapVert(x) { return (2.0 / gridSize) * x - 1; }
-function mapVert2(x, y) { return [mapVert(x), mapVert(y)]; }
-function mapTexCoord(x) { return (mapVert(x) + 1.0) / 2.0; }
+export function mapVert(x) { return (2.0 / gridSize) * x - 1; }
+export function mapVert2(x, y) { return [mapVert(x), mapVert(y)]; }
+export function mapTexCoord(x) { return (mapVert(x) + 1.0) / 2.0; }
 
-function generateHeightMap(s, t) {
+export function generateHeightMap(s, t) {
     return Math.sin((s + t) * 30) * 0.05;
 }
 
-function generateGrid(useHeightMap = false, heightMapFunc = generateHeightMap) {
+export function generateGrid(useHeightMap = false, heightMapFunc = generateHeightMap) {
     var vertices = [];
     var indices = [];
     var texCoords = [];
@@ -185,7 +185,7 @@ function generateGrid(useHeightMap = false, heightMapFunc = generateHeightMap) {
     return [vertices, indices, texCoords, normals];
 }
 
-function generateCube() {
+export function generateCube() {
     var vertices = [
         // Front face
         -1.0, -1.0, 1.0,
