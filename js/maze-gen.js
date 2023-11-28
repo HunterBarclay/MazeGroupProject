@@ -24,7 +24,7 @@ function makeId(position) {
     return position.join(',');
 }
 
-class MazeNode {
+export class MazeNode {
     constructor(position, distance) {
         this.position = position;
         this.distance = distance;
@@ -38,7 +38,7 @@ class MazeNode {
     }
 }
 
-class MazeGraph {
+export class MazeGraph {
     constructor(width, height) {
         this.width = width;
         this.height = height;
@@ -98,59 +98,9 @@ function constructCompleteGraph(width, height) {
 }
 
 /**
- * Generate a maze
- * 
- * @param {*} width             Width of the maze
- * @param {*} height            Height of the maze
- * @param {*} difficultyRating  0 - 1 Difficulty rating of the maze
- * @returns                     Maze object that stores start position, end position, difficulty, and entire maze graph
- */
-function generateMaze(width, height, difficultyRating) {
-    var completeGraph = constructCompleteGraph(width, height);
-    var mazeGraph = new MazeGraph(width, height);
-
-    var deadEnds = new Array();
-
-    function recurseBuild(currentId, length) {
-        var openNodes = completeGraph.getNeighbors(currentId).filter((nodeId) => !mazeGraph.hasNode(nodeId));
-
-        if (openNodes.length == 0) { // If this is the first visit and it has no available neighbors, dead end
-            deadEnds.push([completeGraph.getNode(currentId).position, length]);
-        }
-        
-        while (openNodes.length > 0) {
-            var rand = Math.floor(random() * 100) % openNodes.length;
-            var nextId = openNodes[rand];
-            mazeGraph.addNode(new MazeNode(completeGraph.getNode(nextId).position, length + 1));
-            mazeGraph.makeEdge(currentId, nextId);
-
-            recurseBuild(nextId, length + 1);
-            openNodes = completeGraph.getNeighbors(currentId).filter((nodeId) => !mazeGraph.hasNode(nodeId));
-        }
-    }
-
-    var startPosition = [Math.floor(random() * (width)), Math.floor(random() * (width))];
-    mazeGraph.addNode(new MazeNode(startPosition));
-    recurseBuild(makeId(startPosition), 0);
-
-    deadEnds.sort((a, b) => a[1] > b[1]);
-    for (var [pos, len] of deadEnds) {
-        console.log(String(pos) + " -> " + len);
-    }
-
-    difficultyRating = Math.min(Math.max(difficultyRating, 0.0), 1.0);
-    var endIndex = Math.floor(difficultyRating * (deadEnds.length - 1));
-    var endPosition = deadEnds[endIndex][0];
-
-    console.log('maze generated!');
-
-    return new Maze(mazeGraph, startPosition, endPosition, difficultyRating);
-}
-
-/**
  * Used for storing maze information
  */
-class Maze {
+export class Maze {
     constructor(mazeGraph, startPosition, endPosition, difficultyRating) {
         this.mazeGraph = mazeGraph;
         this.startPosition = startPosition;
@@ -205,9 +155,58 @@ class Maze {
     }
 }
 
-var mazeWidth = 10;
-var mazeHeight = 10;
+/**
+ * Generate a maze
+ * 
+ * @param {*} width             Width of the maze
+ * @param {*} height            Height of the maze
+ * @param {*} difficultyRating  0 - 1 Difficulty rating of the maze
+ * @returns                     Maze object that stores start position, end position, difficulty, and entire maze graph
+ */
+export function generateMaze(width, height, difficultyRating) {
+    var completeGraph = constructCompleteGraph(width, height);
+    var mazeGraph = new MazeGraph(width, height);
 
-var myMaze = generateMaze(mazeWidth, mazeHeight, 0.3);
+    var deadEnds = new Array();
 
-myMaze.print();
+    function recurseBuild(currentId, length) {
+        var openNodes = completeGraph.getNeighbors(currentId).filter((nodeId) => !mazeGraph.hasNode(nodeId));
+
+        if (openNodes.length == 0) { // If this is the first visit and it has no available neighbors, dead end
+            deadEnds.push([completeGraph.getNode(currentId).position, length]);
+        }
+        
+        while (openNodes.length > 0) {
+            var rand = Math.floor(random() * 100) % openNodes.length;
+            var nextId = openNodes[rand];
+            mazeGraph.addNode(new MazeNode(completeGraph.getNode(nextId).position, length + 1));
+            mazeGraph.makeEdge(currentId, nextId);
+
+            recurseBuild(nextId, length + 1);
+            openNodes = completeGraph.getNeighbors(currentId).filter((nodeId) => !mazeGraph.hasNode(nodeId));
+        }
+    }
+
+    var startPosition = [Math.floor(random() * (width)), Math.floor(random() * (width))];
+    mazeGraph.addNode(new MazeNode(startPosition));
+    recurseBuild(makeId(startPosition), 0);
+
+    deadEnds.sort((a, b) => a[1] > b[1]);
+    for (var [pos, len] of deadEnds) {
+        console.log(String(pos) + " -> " + len);
+    }
+
+    difficultyRating = Math.min(Math.max(difficultyRating, 0.0), 1.0);
+    var endIndex = Math.floor(difficultyRating * (deadEnds.length - 1));
+    var endPosition = deadEnds[endIndex][0];
+
+    console.log('maze generated!');
+
+    return new Maze(mazeGraph, startPosition, endPosition, difficultyRating);
+}
+
+// Test Code
+// var mazeWidth = 10;
+// var mazeHeight = 10;
+// var myMaze = generateMaze(mazeWidth, mazeHeight, 0.3);
+// myMaze.print();
