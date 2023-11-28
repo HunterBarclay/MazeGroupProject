@@ -3,10 +3,8 @@ import {
     makePerpendicular, normalizeVector, toRadians,
     crossProductVector, gridSize
 } from "../util/mesh-gen.js";
-
-import { mat4 } from "../glMatrix_util.js";
-
-import { requestAnimFrame } from "../webgl-utils.js";
+import { mat4 } from "../util/glMatrix_util.js";
+import { requestAnimFrame } from "../util/webgl-utils.js";
 
 var gl;
 
