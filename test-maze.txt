@@ -1,0 +1,80 @@
+To view better, in VSCode set lineHeight to 11
+
+[20x20] 0.5 Difficulty
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X         X         X     X         X   X
+X XXXXX X X XXXXX XXX XXX X XXXXX X XXX X
+X X   X X X   X   X   X   X X X   X     X
+X XXX X X X X XXXXX XXX XXX X X XXXXXXX X
+X     X X X X     X X X     X X     X   X
+XXX XXX X XXXXXXX X X XXXXXXX XXXXX X XXX
+X   X   X         X     X       X   X   X
+XXXXX XXXXXXXXXXX XXXXX X X XXXXX XXXXX X
+X     X         X   X X X X X     X   X X
+X XXXXX XXXXXXX XXX X X XXX X XXXXX X X X
+X X         X     X   X   X X X     XSX X
+X XXXXX XXX XXXXX XXX XXX X X X XXXXXXXXX
+X X   X X X     X   X X     X X X       X
+X X X X X XXXXX XXX X X XXXXX X X XXXXX X
+X   X X       X   X X X   X   X   X   X X
+X XXX XXXXX XXXXX X X XXX X XXXXXXX XXX X
+X X   X   X X     X X X X X     X       X
+X X XXX XXX X XXXXX X X X XXXXX X XXXXXXX
+X X   X     X X X   X   X X X   X       X
+X XXX X XXXXX X X XXXXX X X X XXXXXXXXX X
+X   X X   X X X   X     X   X       X   X
+X XXX XXX X X XXXXX XXXXXXX XXX XXXXX XXX
+X X   X   X X X   X X   X     X X     X X
+X X XXX XXX X X X X XXX X XXXXX X XXXXX X
+X X X   X   X   X       X   X   X     X X
+X X X XXX XXXXXXXXX XXXXXXX X XXXXXXX X X
+X X X X   X       X X       X     X   X X
+XXX X X XXX XXXXX XXX XXXXXXXXXXX X XXX X
+X   X   X   X   X     XE        X X     X
+X XXXXXXX XXXXX XXXXXXXXXXX XXXXX XXXXX X
+X         X     X         X X     X   X X
+X XXXXXXXXX XXX XXX XXXXX X X XXX X XXX X
+X X     X     X     X   X   X X     X   X
+X X X XXX XXX XXXXXXXXX XXX X XXX XXX XXX
+X X X     X   X           X X   X X   X X
+X XXXXXXXXX XXX XXXXXXX XXX XXX X X XXX X
+X X   X   X X   X       X   X X X X   X X
+X X X X X X X X XXXXXXXXX XXX X XXXXX X X
+X   X   X   X X               X         X
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+[10x10] 0.3 Difficulty
+XXXXXXXXXXXXXXXXXXXXX
+X           X   XE  X
+X XXXXXXXXX X X XXX X
+X   X     X   X   X X
+XXX X XXXXXXXXXXX X X
+X   X       X   X   X
+X XXX XXX XXX X XXX X
+X   X   X   X X X   X
+X X XXXXX X X X X XXX
+X X     X X X X   X X
+X XXXXX X X X XXXXX X
+X X   X X X X   X   X
+X X XXX X X XXX X XXX
+X   X   X X X   X   X
+XXX X XXXXX X XXXXX X
+X   X     X X X     X
+X XXXXXXX X X XXX X X
+X X X   X X   X   X X
+X X X X X X XXX XXX X
+X   XSX   X     X   X
+XXXXXXXXXXXXXXXXXXXXX
+
+[5x5] 1.0 Difficulty
+XXXXXXXXXXX
+XSXE      X
+X XXXXXXX X
+X     X   X
+XXXXX X XXX
+X   X X   X
+X X X XXX X
+X X X X   X
+X XXX X X X
+X       X X
+XXXXXXXXXXX

@@ -1,4 +1,4 @@
-# Doom Group Project
+# Maze Group Project
 This is a group project for CS464. Team is Hunter Barclay, Josh Martin, Jordan Casper.
 
 ## Planning
