@@ -2,7 +2,11 @@ import {
     generateGrid, addVector, multVector, magnitudeVector,
     makePerpendicular, normalizeVector, toRadians,
     crossProductVector, gridSize
-} from "../mesh-gen.js";
+} from "../util/mesh-gen.js";
+
+import { mat4 } from "../glMatrix_util.js";
+
+import { requestAnimFrame } from "../webgl-utils.js";
 
 var gl;
 

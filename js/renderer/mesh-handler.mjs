@@ -1,11 +1,21 @@
 class MeshHandler {
-    constructor(testVal) {
-        this.testVal = testVal;
+
+    /**
+     * Load mesh data
+     * 
+     * @param {Float32Array} vertexArray    Vertex Data
+     * @param {Float32Array} indexArray     Index Data
+     * @param {Float32Array} normalArray    Normal Data
+     * @param {Float32Array} texCoordArray  Tex Coord Data
+     */
+    constructor(vertexArray, indexArray, normalArray, texCoordArray) {
+        this.vertexArray = vertexArray;
+        this.indexArray = indexArray;
+        this.normalArray = normalArray;
+        this.texCoordArray = texCoordArray;
     }
 
-    getVal() {
-        return this.testVal;
-    }
+    
 }
 
 export default MeshHandler;
