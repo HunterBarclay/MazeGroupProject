@@ -159,12 +159,8 @@ var cubeVertexNormalBuffer;
 var normalBuffer;
 
 function initGeometry() {
-
-    // while (Gpixels === null) { }
-
-    // const [v, i, t, n] = generateGrid(true);
+    
     const [v, i, t, n] = generateGrid(true, getTerrainHeight);
-    // const [v, i, t, n] = generateCube();
 
     normalBuffer = n;
 
