@@ -6,7 +6,7 @@ class BatchInstance {
      * Create a batch instance
      * 
      * @param {MeshHandler} meshData    Mesh handler for data
-     * @param {Float32Array} position   Position to modify vertices by
+     * @param {Array<Number>} position  3 floats to describe position
      */
     constructor(meshData, position) {
         this.meshData = meshData;
@@ -87,8 +87,8 @@ class BatchInstance {
             gl.bufferSubData(gl.ARRAY_BUFFER, vertexOffset, tmpVertBuf);
         }
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
-        gl.bufferSubData(gl.ARRAY_BUFFER, indexOffset, this.meshData.indexArray);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, indexOffset, this.meshData.indexArray);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
         gl.bufferSubData(gl.ARRAY_BUFFER, normalOffset, this.meshData.normalArray);
