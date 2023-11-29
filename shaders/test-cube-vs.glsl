@@ -9,15 +9,12 @@ uniform vec3 uDirLight;
 varying vec2 vTextureCoord;
 varying vec3 vNormal;
 varying vec3 vAmbient;
-varying float vHeight;
 
 uniform sampler2D uSampler;
 // uniform sampler2D uNormalMap;
 
 void main(void) {
     vec3 pos = aVertexPosition;
-    vHeight = pos.y;
-    // pos.z = sin(pos.x * 4.0);
     gl_Position = uPMatrix * uMVMatrix * vec4(pos, 1.0);
 
     vTextureCoord = aTextureCoord;

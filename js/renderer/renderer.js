@@ -1,8 +1,7 @@
-import { 
-    generateGrid, addVector, multVector, magnitudeVector,
-    makePerpendicular, normalizeVector, toRadians,
-    crossProductVector, gridSize
-} from "../mesh-gen.js";
+import { mat4 } from "../util/glMatrix_util.js";
+import { requestAnimFrame } from "../util/webgl-utils.js";
+import BatchInstance from "./batch-instance.mjs";
+import { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 
 var gl;
 
@@ -44,19 +43,13 @@ function initGLScene() {
 }
 
 
-async function getShader(gl, id) {
-    var shaderScript = document.getElementById(id);
-    if (!shaderScript) {
-        console.log("Can't find shader script");
-        return null;
-    }
-
-    var str = await fetch(shaderScript.src).then(x => x.text());
+async function getShader(gl, type, src) {
+    var str = await fetch(src, {cache: "no-store"}).then(x => x.text());
 
     var shader;
-    if (shaderScript.type == "x-shader/x-fragment") {
+    if (type == "frag") {
         shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (shaderScript.type == "x-shader/x-vertex") {
+    } else if (type == "vert") {
         shader = gl.createShader(gl.VERTEX_SHADER);
     } else {
         return null;
@@ -77,8 +70,8 @@ async function getShader(gl, id) {
 var shaderProgram;
 
 async function initShaders() {
-    var fragmentShader = await getShader(gl, "shader-fs");
-    var vertexShader = await getShader(gl, "shader-vs");
+    var fragmentShader = await getShader(gl, "frag", "/shaders/test-cube-fs.glsl");
+    var vertexShader = await getShader(gl, "vert", "/shaders/test-cube-vs.glsl");
 
     shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
@@ -112,7 +105,6 @@ async function initShaders() {
     shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
     shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
-    // shaderProgram.normalMap = gl.getUniformLocation(shaderProgram, "uNormalMap");
 
     shaderProgram.dirLight = gl.getUniformLocation(shaderProgram, "uDirLight");
 }
@@ -156,84 +148,65 @@ var cubeVertexTextureCoordBuffer;
 var cubeVertexIndexBuffer;
 var cubeVertexNormalBuffer;
 
-var normalBuffer;
+var cubeBatchInstance;
 
 function initGeometry() {
     
-    const [v, i, t, n] = generateGrid(true, getTerrainHeight);
-
-    normalBuffer = n;
+    cubeBatchInstance = new BatchInstance(generateCubeMesh(), [0.0, 0.0, 0.0]);
 
     cubeVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    var vertices = v;
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     cubeVertexPositionBuffer.itemSize = 3;
-    cubeVertexPositionBuffer.numItems = v.length / 3;
-
-    cubeVertexTextureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    var textureCoords = t;
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-    cubeVertexTextureCoordBuffer.itemSize = 2;
-    cubeVertexTextureCoordBuffer.numItems = t.length / 3;
+    cubeVertexPositionBuffer.numItems = cubeBatchInstance.getVertexBufferLength() / 3;
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getVertexBufferLength(), gl.STATIC_DRAW);
 
     cubeVertexIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-    var cubeVertexIndices = i;
-    // Ints instead of shorts
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(cubeVertexIndices), gl.STATIC_DRAW);
     cubeVertexIndexBuffer.itemSize = 1;
-    cubeVertexIndexBuffer.numItems = i.length;
+    cubeVertexIndexBuffer.numItems = cubeBatchInstance.getIndexBufferLength();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getIndexBufferLength(), gl.STATIC_DRAW);
 
     cubeVertexNormalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(n), gl.STATIC_DRAW);
     cubeVertexNormalBuffer.itemSize = 3;
-    cubeVertexNormalBuffer.numItems = n.length / 3;
+    cubeVertexNormalBuffer.numItems = cubeBatchInstance.getNormalBufferLength() / 3;
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getNormalBufferLength(), gl.STATIC_DRAW);
+
+    cubeVertexTextureCoordBuffer = gl.createBuffer();
+    cubeVertexTextureCoordBuffer.itemSize = 2;
+    cubeVertexTextureCoordBuffer.numItems = cubeBatchInstance.getTexCoordBufferLength() / 2;
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getTexCoordBufferLength(), gl.STATIC_DRAW);
+
+    cubeBatchInstance.writeInstanceToBuffer(
+        gl,
+        0, cubeVertexPositionBuffer,
+        0, cubeVertexIndexBuffer,
+        0, cubeVertexNormalBuffer,
+        0, cubeVertexTextureCoordBuffer
+    );
 }
 
 
 // Initialize our texture data and prepare it for rendering
-// var rainbowTexture;
-// var monaLisaTexture;
 var heightTexture;
-var Gpixels = null;
 
 function initTextures() {
-    // rainbowTexture = loadTexture("./textures/rainbow.png");
-    // monaLisaTexture = loadTexture("./textures/monalisa.jpg");
-    heightTexture = loadTexture("./textures/terrain.png", true);
+    heightTexture = loadTexture("./textures/terrain.png");
 }
 
-function loadTexture(path, loadInJS = false) {
+function loadTexture(path) {
     var texture = gl.createTexture();
     texture.image = new Image();
     texture.image.onload = function () {
-        handleLoadedTexture(texture, loadInJS)
-
-        if (loadInJS) {
-            console.log("initing geometry");
-            initGeometry();
-        }
+        handleLoadedTexture(texture);
     }
 
-    // exTexture.image.src = "./box.png";
     texture.image.src = path;
     return texture;
 }
 
-function handleLoadedTexture(texture, loadInJS = false) {
-    // gl.bindTexture(gl.TEXTURE_2D, texture);
-    // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    // // CREDIT: https://stackoverflow.com/questions/3792027/webgl-and-the-power-of-two-image-size
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    // gl.bindTexture(gl.TEXTURE_2D, null);
-
+function handleLoadedTexture(texture) {
     // configure the texture handle for use by the GPU
     // has nothing to do with the pixel unpacking
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -241,67 +214,7 @@ function handleLoadedTexture(texture, loadInJS = false) {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    
-    if (loadInJS) {
-        // alocate the array for holding the RGBA pixel data
-        Gpixels = {
-            width: texture.image.width,
-            height: texture.image.height,
-            pixels: new Uint8Array(4 * texture.image.width * texture.image.height)
-        }
-        
-        // here we use a framebuffer as an offscreen render object
-        // draw the texture into it and then copy the pixel values into a local array.
-        var framebuffer = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
-            gl.readPixels(0, 0, Gpixels.width, Gpixels.height, gl.RGBA, gl.UNSIGNED_BYTE, Gpixels.pixels);
-            console.log("Read into buffer");
-        } else {
-            console.log("Just straight up not reading pixels lmao");
-        }
-        
-        // unbind this framebuffer so its memory can be reclaimed.
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
     gl.bindTexture(gl.TEXTURE_2D, null);
-
-
-}
-
-function getTerrainHeight(s, t) {
-
-    s = Math.min(Math.max(s, 0.0), 1.0);
-    t = Math.min(Math.max(t, 0.0), 1.0);
-
-    var sCoord = Math.floor(s * (Gpixels.width - 0.01));
-    var tCoord = Math.floor(t * (Gpixels.height - 0.01));
-
-    var index = (tCoord * Gpixels.width + sCoord) * 4;
-    var color = [Gpixels.pixels[index], Gpixels.pixels[index] + 1, Gpixels.pixels[index] + 2];
-
-    return (magnitudeVector(color) / 256.0) * 0.3 + 0.6;
-    // return Math.sin((s + t) * 35) * 0.1 + 0.8;
-}
-
-function getNormal(x, z) {
-    x = x * 0.5 + 0.5;
-    z = z * 0.5 + 0.5;
-    
-    var xDec = Math.min(Math.max(x * gridSize, 0), gridSize - 1);
-    var zDec = Math.min(Math.max(z * gridSize, 0), gridSize - 1);
-    x = Math.floor(xDec);
-    z = Math.floor(zDec);
-    var offset = 0;
-    if ((xDec - x) + (zDec - z) > 1.0) { // Determine which triangle to use
-        offset = 9;
-    }
-
-    var index = (x * gridSize + z) * 18;
-    var normal = [normalBuffer[index + offset], normalBuffer[index + offset + 1], normalBuffer[index + offset + 2]];
-
-    return normal;
 }
 
 //Initialize everything for starting up a simple webGL application
@@ -317,7 +230,7 @@ async function startHelloWebGL() {
     // now build basic geometry objects.
     await initShaders();
     initTextures();
-    // initGeometry();
+    initGeometry();
 
     // Found blend function here: https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     //   I actually found the blend stuff from someone having an issue, but I justed wanted alpha to do anything
@@ -341,46 +254,21 @@ var yRot = 0;
 var zRot = 0;
 var zPos = -3.0;
 
-var position = [0.0, 1.0, 0.0];
-var forward = [0.0, 0.0, -1.0];
-var right = [-1.0, 0.0, 0.0];
 const speed = 0.002;
 
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    forward = [Math.sin(toRadians(yRot)), 0.0, -Math.cos(toRadians(yRot))];
-    right = crossProductVector(forward, [0.0, 1.0, 0.0]);
-
-    var vertMovement = (keys['w'] === true ? 1.0 : 0.0) + (keys['s'] ? -1.0 : 0.0);
-    var horizMovement = (keys['d'] === true ? 1.0 : 0.0) + (keys['a'] ? -1.0 : 0.0);
-
-    var delta = multVector(normalizeVector(addVector(multVector(forward, vertMovement), multVector(right, horizMovement))), speed);
-    position = addVector(position, delta);
-
-    position[0] = Math.min(Math.max(position[0], -0.95), 0.95);
-    position[2] = Math.min(Math.max(position[2], -0.95), 0.95);
-
-    position[1] = getTerrainHeight((position[0] * 0.5) + 0.5, (position[2] * 0.5) + 0.5) + 0.03;
-
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
 
     mat4.identity(mvMatrix);
+    mat4.rotate(mvMatrix, xRot / 180.0 * 3.1415, [1, 0, 0]);
+    mat4.rotate(mvMatrix, yRot / 180.0 * 3.1415, [0, 1, 0]);
+    mat4.rotate(mvMatrix, zRot / 180.0 * 3.1415, [0, 0, 1]);
 
-    mat4.rotate(mvMatrix, 0.0 / 180.0 * 3.1415, [1, 0, 0]);
-    mat4.rotate(mvMatrix, 0.0 / 180.0 * 3.1415, [0, 1, 0]);
-    mat4.rotate(mvMatrix, 0.0 / 180.0 * 3.1415, [0, 0, 1]);
-
-    var up = getNormal(position[0], position[2]);
-    forward = makePerpendicular(up, forward);
-
-    const vMatrix = generateViewMatrix(position, forward, up);
+    const vMatrix = generateViewMatrix([0.0, 0.0, 6.0]);
     mat4.multiply(mvMatrix, vMatrix);
-
-    setPosition(position);
-
-    // console.log(mvMatrix);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -392,19 +280,12 @@ function drawScene() {
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
-    // gl.bindTexture(gl.TEXTURE_2D, smileTexture);
-    // gl.bindTexture(gl.TEXTURE_2D, flagTexture);
-    // gl.bindTexture(gl.TEXTURE_2D, alphaTestTexture);
-    // gl.bindTexture(gl.TEXTURE_2D, rainbowTexture);
-    // gl.bindTexture(gl.TEXTURE_2D, monaLisaTexture);
     gl.bindTexture(gl.TEXTURE_2D, heightTexture);
     gl.uniform1i(shaderProgram.samplerUniform, 0);
-    // gl.activeTexture(gl.TEXTURE1);
-    // gl.bindTexture(gl.TEXTURE_2D, noiseNormalTexture);
-    // gl.uniform1i(shaderProgram.normalMap, 1);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
+
     // Drawing ints not shorts. CREDIT: https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
     var uints_for_indices = gl.getExtension("OES_element_index_uint");
     gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
@@ -420,7 +301,7 @@ function animate() {
 
         // here we could change variables to adjust rotations for animation
         // yRot += elapsed * 0.05;
-        // zRot += elapsed * 0.1;
+        zRot += elapsed * 0.1;
         // xRot += elapsed * 0.2;
     }
     lastTime = timeNow;
@@ -429,11 +310,8 @@ function animate() {
 
 function Frames() {
     requestAnimFrame(Frames);
-
-    if (Gpixels !== null) {
-        drawScene();
-        animate();
-    }
+    drawScene();
+    animate();
 }
 
 /// USER INTERACTION EVENTS
@@ -483,12 +361,6 @@ function onKeyDown(event) {
 
 function onKeyUp(event) {
     keys[event.key] = false;
-}
-
-/// FEEDBACK
-
-function setPosition(pos) {
-    document.getElementById("cam-position").innerHTML = "(" + pos[0] + ", " + pos[1] + ", " + pos[2] + ")";
 }
 
 // EXPORTS

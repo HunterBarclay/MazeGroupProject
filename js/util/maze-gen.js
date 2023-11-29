@@ -24,7 +24,7 @@ function makeId(position) {
     return position.join(',');
 }
 
-export class MazeNode {
+class MazeNode {
     constructor(position, distance) {
         this.position = position;
         this.distance = distance;
@@ -38,7 +38,7 @@ export class MazeNode {
     }
 }
 
-export class MazeGraph {
+class MazeGraph {
     constructor(width, height) {
         this.width = width;
         this.height = height;
@@ -100,7 +100,7 @@ function constructCompleteGraph(width, height) {
 /**
  * Used for storing maze information
  */
-export class Maze {
+class Maze {
     constructor(mazeGraph, startPosition, endPosition, difficultyRating) {
         this.mazeGraph = mazeGraph;
         this.startPosition = startPosition;
@@ -163,7 +163,7 @@ export class Maze {
  * @param {*} difficultyRating  0 - 1 Difficulty rating of the maze
  * @returns                     Maze object that stores start position, end position, difficulty, and entire maze graph
  */
-export function generateMaze(width, height, difficultyRating) {
+function generateMaze(width, height, difficultyRating) {
     var completeGraph = constructCompleteGraph(width, height);
     var mazeGraph = new MazeGraph(width, height);
 
@@ -210,3 +210,5 @@ export function generateMaze(width, height, difficultyRating) {
 // var mazeHeight = 10;
 // var myMaze = generateMaze(mazeWidth, mazeHeight, 0.3);
 // myMaze.print();
+
+export { MazeNode, MazeGraph, Maze, generateMaze }

@@ -1,41 +1,60 @@
 import MeshHandler from "./mesh-handler.mjs";
 
 class BatchInstance {
-    constructor(meshData, position) { }
+
+    /**
+     * Create a batch instance
+     * 
+     * @param {MeshHandler} meshData    Mesh handler for data
+     * @param {Array<Number>} position  3 floats to describe position
+     */
+    constructor(meshData, position) {
+        this.meshData = meshData;
+        this.position = position;
+    }
 
     /**
      * Returns the length of data that will be appended to Vertex Buffer 
      */
-    getVertexBufferLength() { }
+    getVertexBufferLength() {
+        return this.meshData.vertexArray.length;
+    }
 
     /**
      * Returns the length of data that will be appended to Index Buffer 
      */
-    getIndexBufferLength() { }
+    getIndexBufferLength() {
+        return this.meshData.indexArray.length;
+    }
 
     /**
      * Returns the length of data that will be appended to Normal Buffer 
      */
-    getNormalBufferLength() { }
+    getNormalBufferLength() {
+        return this.meshData.normalArray.length;
+    }
 
     /**
      * Returns the length of data that will be appended to TexCoord Buffer 
      */
-    getTexCoordBufferLength() { }
+    getTexCoordBufferLength() {
+        return this.meshData.texCoordArray.length;
+    }
 
     /**
      * Writes a mesh with batched parameters into buffers for rendering
      * 
-     * @param {WebGLBuffer} vertexOffset    Offset from the start of the vertex buffer to start writing
+     * @param {WebGLRenderingContext} gl    WebGL Context
+     * @param {Number} vertexOffset         Offset from the start of the vertex buffer to start writing
      * @param {WebGLBuffer} vertexBuffer    Vertex Buffer
-     * @param {WebGLBuffer} indexOffset     Offset from the start of the index buffer to start writing
+     * @param {Number} indexOffset          Offset from the start of the index buffer to start writing
      * @param {WebGLBuffer} indexBuffer     Index Buffer
-     * @param {WebGLBuffer} normalOffset    Offset from the start of the normal buffer to start writing
+     * @param {Number} normalOffset         Offset from the start of the normal buffer to start writing
      * @param {WebGLBuffer} normalBuffer    Normal Buffer
-     * @param {WebGLBuffer} texCoordOffset  Offset from the start of the texture coordinate buffer to start writing
+     * @param {Number} texCoordOffset       Offset from the start of the texture coordinate buffer to start writing
      * @param {WebGLBuffer} texCoordBuffer  Texture coordinate Buffer
      * 
-     * Returns an array of the following makeup:
+     * @returns {Array<Number>} An array of the following makeup:
      * [
      *      end index of the vertex buffer,
      *      end index of the index buffer,
@@ -47,6 +66,7 @@ class BatchInstance {
      * the end index will be 30 (one after the last element)
      */
     writeInstanceToBuffer(
+        gl,
         vertexOffset,
         vertexBuffer,
         indexOffset,
@@ -54,8 +74,28 @@ class BatchInstance {
         normalOffset,
         normalBuffer,
         texCoordOffset,
-        texCoordBuffer,
-    ) { }
+        texCoordBuffer
+    ) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        {
+            // The theory is that calling bufferSubData has a lot of overhead, so allocating all the altered data
+            // into an array, then loading the array into the buffer is faster. Who knows if thats true.
+            var tmpVertBuf = new Float32Array(this.getVertexBufferLength());
+            for (var i = 0; i < tmpVertBuf.length; i++) {
+                tmpVertBuf[i] = this.meshData.vertexArray[i] + this.position[i % 3];
+            }
+            gl.bufferSubData(gl.ARRAY_BUFFER, vertexOffset, tmpVertBuf);
+        }
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, indexOffset, this.meshData.indexArray);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+        gl.bufferSubData(gl.ARRAY_BUFFER, normalOffset, this.meshData.normalArray);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+        gl.bufferSubData(gl.ARRAY_BUFFER, texCoordOffset, this.meshData.texCoordArray);
+    }
 }
 
 export default BatchInstance;

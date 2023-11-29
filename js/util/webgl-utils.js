@@ -57,7 +57,7 @@
  * visible.
  */
 
-WebGLUtils = function() {
+export var WebGLUtils = function() {
 
 /**
  * Creates the HTLM for a failure message
@@ -162,14 +162,25 @@ return {
 /**
  * Provides requestAnimationFrame in a cross browser way.
  */
-window.requestAnimFrame = (function() {
-  return window.requestAnimationFrame ||
-         window.webkitRequestAnimationFrame ||
-         window.mozRequestAnimationFrame ||
-         window.oRequestAnimationFrame ||
-         window.msRequestAnimationFrame ||
-         function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
-           window.setTimeout(callback, 1000/60);
-         };
-})();
+// window.requestAnimFrame = (function() {
+//   return window.requestAnimationFrame ||
+//          window.webkitRequestAnimationFrame ||
+//          window.mozRequestAnimationFrame ||
+//          window.oRequestAnimationFrame ||
+//          window.msRequestAnimationFrame ||
+//          function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+//            window.setTimeout(callback, 1000/60);
+//          };
+// })();
 
+export var requestAnimFrame = (function() {
+    return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+            window.setTimeout(callback, 1000/60);
+        };
+    }
+)();
