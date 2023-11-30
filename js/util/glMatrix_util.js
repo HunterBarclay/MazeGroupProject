@@ -39,7 +39,30 @@ mat4.rotate = function (a, b, c, d) {
 mat4.rotateX = function (a, b, c) { var d = Math.sin(b); b = Math.cos(b); var e = a[4], g = a[5], f = a[6], h = a[7], i = a[8], j = a[9], k = a[10], l = a[11]; if (c) { if (a != c) { c[0] = a[0]; c[1] = a[1]; c[2] = a[2]; c[3] = a[3]; c[12] = a[12]; c[13] = a[13]; c[14] = a[14]; c[15] = a[15] } } else c = a; c[4] = e * b + i * d; c[5] = g * b + j * d; c[6] = f * b + k * d; c[7] = h * b + l * d; c[8] = e * -d + i * b; c[9] = g * -d + j * b; c[10] = f * -d + k * b; c[11] = h * -d + l * b; return c };
 mat4.rotateY = function (a, b, c) { var d = Math.sin(b); b = Math.cos(b); var e = a[0], g = a[1], f = a[2], h = a[3], i = a[8], j = a[9], k = a[10], l = a[11]; if (c) { if (a != c) { c[4] = a[4]; c[5] = a[5]; c[6] = a[6]; c[7] = a[7]; c[12] = a[12]; c[13] = a[13]; c[14] = a[14]; c[15] = a[15] } } else c = a; c[0] = e * b + i * -d; c[1] = g * b + j * -d; c[2] = f * b + k * -d; c[3] = h * b + l * -d; c[8] = e * d + i * b; c[9] = g * d + j * b; c[10] = f * d + k * b; c[11] = h * d + l * b; return c };
 mat4.rotateZ = function (a, b, c) { var d = Math.sin(b); b = Math.cos(b); var e = a[0], g = a[1], f = a[2], h = a[3], i = a[4], j = a[5], k = a[6], l = a[7]; if (c) { if (a != c) { c[8] = a[8]; c[9] = a[9]; c[10] = a[10]; c[11] = a[11]; c[12] = a[12]; c[13] = a[13]; c[14] = a[14]; c[15] = a[15] } } else c = a; c[0] = e * b + i * d; c[1] = g * b + j * d; c[2] = f * b + k * d; c[3] = h * b + l * d; c[4] = e * -d + i * b; c[5] = g * -d + j * b; c[6] = f * -d + k * b; c[7] = h * -d + l * b; return c };
-mat4.frustum = function (a, b, c, d, e, g, f) { f || (f = mat4.create()); var h = b - a, i = d - c, j = g - e; f[0] = e * 2 / h; f[1] = 0; f[2] = 0; f[3] = 0; f[4] = 0; f[5] = e * 2 / i; f[6] = 0; f[7] = 0; f[8] = (b + a) / h; f[9] = (d + c) / i; f[10] = -(g + e) / j; f[11] = -1; f[12] = 0; f[13] = 0; f[14] = -(g * e * 2) / j; f[15] = 0; return f }; mat4.perspective = function (a, b, c, d, e) { a = c * Math.tan(a * Math.PI / 360); b = a * b; return mat4.frustum(-b, b, -a, a, c, d, e) };
+mat4.frustum = function (left, right, bottom, top, near, far, dest) {
+    dest || (dest = mat4.create());
+    var h = right - left,
+        i = top - bottom,
+        j = far - near;
+    dest[0] = near * 2 / h;
+    dest[1] = 0;
+    dest[2] = 0;
+    dest[3] = 0;
+    dest[4] = 0;
+    dest[5] = near * 2 / i;
+    dest[6] = 0;
+    dest[7] = 0;
+    dest[8] = (right + left) / h;
+    dest[9] = (top + bottom) / i;
+    dest[10] = -(far + near) / j;
+    dest[11] = -1;
+    dest[12] = 0;
+    dest[13] = 0;
+    dest[14] = -(far * near * 2) / j;
+    dest[15] = 0;
+    return dest
+};
+mat4.perspective = function (a, b, c, d, e) { a = c * Math.tan(a * Math.PI / 360); b = a * b; return mat4.frustum(-b, b, -a, a, c, d, e) };
 mat4.ortho = function (a, b, c, d, e, g, f) { f || (f = mat4.create()); var h = b - a, i = d - c, j = g - e; f[0] = 2 / h; f[1] = 0; f[2] = 0; f[3] = 0; f[4] = 0; f[5] = 2 / i; f[6] = 0; f[7] = 0; f[8] = 0; f[9] = 0; f[10] = -2 / j; f[11] = 0; f[12] = -(a + b) / h; f[13] = -(d + c) / i; f[14] = -(g + e) / j; f[15] = 1; return f };
 mat4.lookAt = function (a, b, c, d) {
     d || (d = mat4.create()); var e = a[0], g = a[1]; a = a[2]; var f = c[0], h = c[1], i = c[2]; c = b[1]; var j = b[2]; if (e == b[0] && g == c && a == j) return mat4.identity(d); var k, l, o, m; c = e - b[0]; j = g - b[1]; b = a - b[2]; m = 1 / Math.sqrt(c * c + j * j + b * b); c *= m; j *= m; b *= m; k = h * b - i * j; i = i * c - f * b; f = f * j - h * c; if (m = Math.sqrt(k * k + i * i + f * f)) { m = 1 / m; k *= m; i *= m; f *= m } else f = i = k = 0; h = j * f - b * i; l = b * k - c * f; o = c * i - j * k; if (m = Math.sqrt(h * h + l * l + o * o)) { m = 1 / m; h *= m; l *= m; o *= m } else o = l = h = 0; d[0] = k; d[1] = h; d[2] = c; d[3] = 0; d[4] = i; d[5] = l; d[6] = j; d[7] = 0; d[8] = f; d[9] =

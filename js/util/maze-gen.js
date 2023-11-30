@@ -140,8 +140,8 @@ class Maze {
             layout[posY + deltaY][posX + deltaX] = ' ';
         }
 
-        layout[2 * this.startPosition[1] + 1][2 * this.startPosition[0] + 1] = 'S';
-        layout[2 * this.endPosition[1] + 1][2 * this.endPosition[0] + 1] = 'E';
+        layout[2 * this.startPosition[2] + 1][2 * this.startPosition[0] + 1] = 'S';
+        layout[2 * this.endPosition[2] + 1][2 * this.endPosition[0] + 1] = 'E';
 
         return layout;
     }
@@ -192,9 +192,6 @@ function generateMaze(width, height, difficultyRating) {
     recurseBuild(makeId(startPosition), 0);
 
     deadEnds.sort((a, b) => a[1] > b[1]);
-    for (var [pos, len] of deadEnds) {
-        console.log(String(pos) + " -> " + len);
-    }
 
     difficultyRating = Math.min(Math.max(difficultyRating, 0.0), 1.0);
     var endIndex = Math.floor(difficultyRating * (deadEnds.length - 1));
@@ -202,13 +199,14 @@ function generateMaze(width, height, difficultyRating) {
 
     console.log('maze generated!');
 
-    return new Maze(mazeGraph, startPosition, endPosition, difficultyRating);
+    return new Maze(mazeGraph, [startPosition[0], 0.0, startPosition[1]], [endPosition[0], 0.0, endPosition[1]], difficultyRating);
 }
 
-// Test Code
-// var mazeWidth = 10;
-// var mazeHeight = 10;
-// var myMaze = generateMaze(mazeWidth, mazeHeight, 0.3);
-// myMaze.print();
+function testMazeGen() {
+    var mazeWidth = 10;
+    var mazeHeight = 10;
+    var myMaze = generateMaze(mazeWidth, mazeHeight, 0.3);
+    myMaze.print();
+}
 
-export { MazeNode, MazeGraph, Maze, generateMaze }
+export { MazeNode, MazeGraph, Maze, generateMaze, testMazeGen }
