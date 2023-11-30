@@ -267,10 +267,10 @@ export function generateCubeMesh() {
         0.0, 0.0,
 
         // Top face
-        0.0, 1.0,
-        0.0, 0.0,
         1.0, 0.0,
         1.0, 1.0,
+        0.0, 1.0,
+        0.0, 0.0,
 
         // Bottom face
         1.0, 1.0,

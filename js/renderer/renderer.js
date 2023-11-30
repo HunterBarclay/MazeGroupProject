@@ -3,6 +3,7 @@ import { requestAnimFrame } from "../util/webgl-utils.js";
 import BatchInstance from "./batch-instance.mjs";
 import { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
+import { parseObjFile } from "../util/obj-parser.mjs";
 
 var gl;
 
@@ -152,11 +153,13 @@ var cubeVertexTextureCoordBuffer;
 var cubeVertexIndexBuffer;
 var cubeVertexNormalBuffer;
 
+var objMeshHandler;
 var cubeBatchInstance;
 
 function initGeometry() {
     
-    cubeBatchInstance = new BatchInstance(generateCubeMesh(), [0.0, 0.0, 0.0]);
+    // cubeBatchInstance = new BatchInstance(generateCubeMesh(), [0.0, 0.0, 0.0]);
+    cubeBatchInstance = new BatchInstance(objMeshHandler, [0.0, 0.0, 0.0]);
 
     cubeVertexPositionBuffer = gl.createBuffer();
     cubeVertexPositionBuffer.itemSize = 3;
@@ -193,10 +196,10 @@ function initGeometry() {
 
 
 // Initialize our texture data and prepare it for rendering
-var heightTexture;
+var normalMapTexture;
 
 function initTextures() {
-    heightTexture = loadTexture("./textures/terrain.png");
+    normalMapTexture = loadTexture("./textures/normalMap.png");
 }
 
 function loadTexture(path) {
@@ -233,13 +236,16 @@ async function startHelloWebGL() {
     // first initialize webgl components
     var gl = initGLScene();
 
+    // objMeshHandler = parseObjFile(await fetch('suzanne.obj', {cache: "no-store"}).then(obj => obj.text()));
+    objMeshHandler = generateCubeMesh();
+
     // now build basic geometry objects.
     await initShaders();
     initTextures();
     initGeometry();
 
     camera = new Camera(0.01, 50, 45, gl.viewportWidth / gl.viewportHeight);
-    camera.setPosition([0.0, 0.0, -5.0]);
+    /// camera.setPosition([0.0, 0.0, -5.0]);
 
     // Found blend function here: https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     //   I actually found the blend stuff from someone having an issue, but I justed wanted alpha to do anything
@@ -261,7 +267,7 @@ async function startHelloWebGL() {
 var xRot = 0;
 var yRot = 0;
 var zRot = 0;
-var zPos = -3.0;
+var zPos = -5.0;
 
 const speed = 0.002;
 
@@ -270,6 +276,7 @@ function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
+    camera.setPosition([0.0, 0.0, zPos]);
     pMatrix = camera.getProjection();
 
     mat4.identity(mvMatrix);
@@ -290,7 +297,7 @@ function drawScene() {
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, heightTexture);
+    gl.bindTexture(gl.TEXTURE_2D, normalMapTexture);
     gl.uniform1i(shaderProgram.samplerUniform, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
@@ -310,9 +317,9 @@ function animate() {
         var elapsed = timeNow - lastTime;
 
         // here we could change variables to adjust rotations for animation
-        yRot += elapsed * 0.05;
-        zRot += elapsed * 0.1;
-        xRot += elapsed * 0.2;
+        // yRot += elapsed * 0.05;
+        // zRot += elapsed * 0.1;
+        // xRot += elapsed * 0.2;
     }
     lastTime = timeNow;
 }
@@ -350,14 +357,12 @@ function onMouseMove(event) {
     if (isDown) {
         if (event.shiftKey) { // If Shift, zoom
             zPos += (event.layerY - lastY) * -0.03;
-            zPos = Math.max(Math.min(zPos, 0), -3);
+            zPos = Math.max(Math.min(zPos, 0), -7);
             // 
         } else { // If not, rotate
             yRot += (event.layerX - lastX) * 0.7;
             xRot += (event.layerY - lastY) * 0.7;
         }
-
-        
 
         lastX = event.layerX;
         lastY = event.layerY;
