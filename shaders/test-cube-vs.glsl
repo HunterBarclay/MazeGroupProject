@@ -3,6 +3,7 @@ attribute vec2 aTextureCoord;
 attribute vec3 aVertexNormal;
 
 uniform mat4 uMVMatrix;
+uniform mat4 uVMatrix;
 uniform mat4 uPMatrix;
 uniform vec3 uDirLight;
 
@@ -15,7 +16,8 @@ uniform sampler2D uSampler;
 
 void main(void) {
     vec3 pos = aVertexPosition;
-    gl_Position = uPMatrix * uMVMatrix * vec4(pos, 1.0);
+    // CREDIT: https://stackoverflow.com/questions/42747784/how-to-convert-world-space-transform-to-object-space-transform
+    gl_Position = uPMatrix * uVMatrix * uMVMatrix * vec4(pos, 1.0);
 
     vTextureCoord = aTextureCoord;
     vAmbient = vec3(0.5, 0.5, 0.5);
@@ -28,6 +30,6 @@ void main(void) {
     rotMat[1][3] = 0.0;
     rotMat[2][3] = 0.0;
 
-    // vNormal = (rotMat * vec4(aVertexNormal, 1.0)).xyz;
-    vNormal = aVertexNormal;
+    vNormal = (rotMat * vec4(aVertexNormal, 1.0)).xyz;
+    // vNormal = aVertexNormal;
 }

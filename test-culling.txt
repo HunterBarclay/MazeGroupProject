@@ -1,0 +1,85 @@
+[20x20] nearZ = 0.1, farZ = 5, fovY = 45, aspect = 16 / 9
+Before
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X         X   X           X             X
+X X XXXXX XXX X XXXXXXX XXX XXXXX XXXXX X
+X X X X   X   X   X   X X   X   X     X X
+X X X X XXX X XXX X XXX X XXXXX XXXXX X X
+X X X     X X   X X X   X     X X     X X
+X X XXXXX X X XXX X X X XXXXX X X X XXXXX
+X X     X   X X     X X X       X X X   X
+XXXXXXX X XXXXX XXXXX X X XXXXXXX XXX X X
+X     X X X       X   X X   X     X   X X
+X XXX X XXX XXXXXXX X XXXXX X XXXXX XXX X
+X X   X   X X X     X X     X     X X X X
+X X XXXXX X X X XXXXX X XXXXXXXXX X X X X
+X X       X   X X X   X   X       X X   X
+X XXXXX XXX XXX X X XXXXX X XXX XXX X XXX
+X   X   X   X   X   X     X X   X   X X X
+X X XXXXX XXX X XXXXX XXXXX XXXXX XXX X X
+X X   X   X   X X     X X   X     X   X X
+XXXXX X XXX XXX X XXXXX X X X XXXXX XXX X
+X   X     X X   X X     X X X   X X   X X
+X X XXXXX X XXXXX XXX XXX X XXX X XXX X X
+X X   X   X X   X     X   X XSX X   X   X
+X XXX XXXXX X X XXXXX X XXXXX X XXX XXX X
+X   X       X X X     X     X   X   X   X
+X X XXXXX XXX X X XXXXXXXXX XXXXX XXX XXX
+X X X   X X   X X   X         X     X X X
+X X X X XXX XXX X XXX XXXXXXXXX XXX X X X
+X X X X   X X X   X   X         XEX X X X
+X X X XXX X X XXXXX XXX XXXXXXXXX X X X X
+X X X   X   X     X   X           X X X X
+X X XXX XXXXX XXXXXXX XXXXX XXXXXXX X X X
+X X   X   X         X     X X       X   X
+X XXX XXX XXX XXXXX XXX XXX X XXXXXXXXX X
+X X X   X   X   X     X X   X           X
+X X X XXXXX X XXX XXXXX X XXXXXXXXXXXXXXX
+X   X X   X X X   X     X X     X       X
+X XXX X X X XXX X X XXX X XXX X X XXX XXX
+X X   X X X     X X X   X   X X X   X   X
+X X XXX X XXXXXXX X XXXXXXX X X XXXXXXX X
+X X     X         X           X         X
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+After
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+----------------------------XSX----------
+----------------------------X X----------
+--------------------------- X   ---------
+--------------------------X XXXXX--------
+-------------------------     X   -------
+-------------------------XXXXXX XX-------
+------------------------        XEX------
+----------------------- XXXXXXXXX X -----
+----------------------X           X X----
+----------------------XXXXX XXXXXXX X----
+---------------------     X X       X ---
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
+-----------------------------------------
