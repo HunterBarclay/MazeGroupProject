@@ -31,7 +31,7 @@ export function testCullingFrustrum() {
     var cam = new Camera(0.1, 5, 45, 16.0 / 9.0);
     var maze = generateMaze(20, 20, 0.1);
     maze.print();
-    // cam.setRotation([0.0, 90.0, 0.0]);
+    cam.setRotation([0.0, 60.0, 0.0]);
     // cam.setPosition([5.0, 0.0, 5.0]);
     cam.setPosition(maze.startPosition);
     var cullFrus = new CullingFrustrum(cam);
