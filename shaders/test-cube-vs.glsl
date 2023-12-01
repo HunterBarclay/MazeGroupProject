@@ -14,7 +14,8 @@ varying vec3 vAmbient;
 varying float vNormTheta;
 
 uniform sampler2D uSampler;
-// uniform sampler2D uNormalMap;
+uniform sampler2D uNormal;
+uniform sampler2D uAmbientMap;
 
 vec4 rotateAroundX(vec4 vec, float phi) {
     mat4 rotMat = mat4(

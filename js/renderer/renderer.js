@@ -108,6 +108,8 @@ async function initShaders() {
     shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
     shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+    shaderProgram.normalUniform = gl.getUniformLocation(shaderProgram, "uNormal");
+    shaderProgram.ambientMapUniform = gl.getUniformLocation(shaderProgram, "uAmbientMap");
 
     shaderProgram.dirLight = gl.getUniformLocation(shaderProgram, "uDirLight");
 }
@@ -196,10 +198,14 @@ function initGeometry() {
 
 
 // Initialize our texture data and prepare it for rendering
-var normalMapTexture;
+var bushTexture;
+var normalTexture;
+var ambientOccTexture;
 
 function initTextures() {
-    normalMapTexture = loadTexture("./textures/normalMap.png");
+    bushTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_basecolor.jpg");
+    normalTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_normal.jpg");
+    ambientOccTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
 }
 
 function loadTexture(path) {
@@ -236,7 +242,7 @@ async function startHelloWebGL() {
     // first initialize webgl components
     var gl = initGLScene();
 
-    // objMeshHandler = parseObjFile(await fetch('suzanne.obj', {cache: "no-store"}).then(obj => obj.text()));
+    // objMeshHandler = parseObjFile(await fetch('busher.obj', {cache: "no-store"}).then(obj => obj.text()));
     objMeshHandler = generateCubeMesh();
 
     // now build basic geometry objects.
@@ -297,8 +303,16 @@ function drawScene() {
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, normalMapTexture);
+    gl.bindTexture(gl.TEXTURE_2D, bushTexture);
     gl.uniform1i(shaderProgram.samplerUniform, 0);
+    
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, normalTexture);
+    gl.uniform1i(shaderProgram.normalUniform, 1);
+
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, ambientOccTexture);
+    gl.uniform1i(shaderProgram.ambientMapUniform, 2);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
