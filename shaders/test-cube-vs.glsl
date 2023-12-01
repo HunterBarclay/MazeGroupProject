@@ -12,6 +12,7 @@ varying vec3 vNormal;
 varying vec3 vTangent;
 varying vec3 vAmbient;
 varying float vNormTheta;
+varying vec3 vFragPos;
 
 uniform sampler2D uSampler;
 uniform sampler2D uNormal;
@@ -42,10 +43,12 @@ vec4 rotateAroundY(vec4 vec, float theta) {
 void main(void) {
     vec3 pos = aVertexPosition;
     // CREDIT: https://stackoverflow.com/questions/42747784/how-to-convert-world-space-transform-to-object-space-transform
+    vFragPos = (uVMatrix * uMVMatrix * vec4(pos, 1.0)).xyz;
     gl_Position = uPMatrix * uVMatrix * uMVMatrix * vec4(pos, 1.0);
 
     vTextureCoord = aTextureCoord;
-    vAmbient = vec3(0.5, 0.5, 0.5);
+
+    vAmbient = vec3(0.7, 0.7, 0.7);
 
     mat4 rotMat = uMVMatrix;
     rotMat[3][0] = 0.0;

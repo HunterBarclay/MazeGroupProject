@@ -4,6 +4,7 @@ import BatchInstance from "./batch-instance.mjs";
 import { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
 import { parseObjFile } from "../util/obj-parser.mjs";
+import refitCanvas from "../util/refit-canvas.mjs";
 
 var gl;
 
@@ -110,6 +111,7 @@ async function initShaders() {
     shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
     shaderProgram.normalUniform = gl.getUniformLocation(shaderProgram, "uNormal");
     shaderProgram.ambientMapUniform = gl.getUniformLocation(shaderProgram, "uAmbientMap");
+    shaderProgram.roughnessUniform = gl.getUniformLocation(shaderProgram, "uRoughness");
 
     shaderProgram.dirLight = gl.getUniformLocation(shaderProgram, "uDirLight");
 }
@@ -118,7 +120,7 @@ async function initShaders() {
 
 // create our basic model and view matrix
 var mvMatrix = mat4.create();
-var lightVec = [0.0, -1.0, 0.0];
+var lightVec = [-0.2, -1.0, -0.5];
 var mvMatrixStack = [];
 // create our projection matrix for projecting from 3D to 2D.
 var pMatrix = mat4.create();
@@ -198,14 +200,35 @@ function initGeometry() {
 
 
 // Initialize our texture data and prepare it for rendering
-var bushTexture;
+var baseTexture;
 var normalTexture;
 var ambientOccTexture;
+var roughnessTexture;
 
 function initTextures() {
-    bushTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_basecolor.jpg");
-    normalTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_normal.jpg");
-    ambientOccTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    // baseTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_basecolor.jpg");
+    // normalTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_normal.jpg");
+    // ambientOccTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+
+    // baseTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
+    // normalTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
+    // ambientOccTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
+    // roughnessTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
+
+    // baseTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_basecolor.jpg");
+    // normalTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_normal.jpg");
+    // ambientOccTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_ambientocclusion.jpg");
+    // roughnessTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_roughness.jpg");
+
+    // baseTexture = loadTexture("./textures/abstract-metal/Abstract_011_basecolor.jpg");
+    // normalTexture = loadTexture("./textures/abstract-metal/Abstract_011_normal.jpg");
+    // ambientOccTexture = loadTexture("./textures/abstract-metal/Abstract_011_ambientOcclusion.jpg");
+    // roughnessTexture = loadTexture("./textures/abstract-metal/Abstract_011_roughness.jpg");
+
+    baseTexture = loadTexture("./textures/metal/Metal_006_basecolor.jpg");
+    normalTexture = loadTexture("./textures/metal/Metal_006_normal.jpg");
+    ambientOccTexture = loadTexture("./textures/metal/Metal_006_ambientOcclusion.jpg");
+    roughnessTexture = loadTexture("./textures/metal/Metal_006_roughness.jpg");
 }
 
 function loadTexture(path) {
@@ -242,8 +265,8 @@ async function startHelloWebGL() {
     // first initialize webgl components
     var gl = initGLScene();
 
-    // objMeshHandler = parseObjFile(await fetch('busher.obj', {cache: "no-store"}).then(obj => obj.text()));
-    objMeshHandler = generateCubeMesh();
+    objMeshHandler = parseObjFile(await fetch('sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
+    // objMeshHandler = generateCubeMesh();
 
     // now build basic geometry objects.
     await initShaders();
@@ -257,6 +280,10 @@ async function startHelloWebGL() {
     //   I actually found the blend stuff from someone having an issue, but I justed wanted alpha to do anything
     gl.clearColor(0.4, 0.4, 0.4, 1.0);
     gl.enable(gl.DEPTH_TEST);
+    // Back face culling
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+    // TODO: Prolly fix alpha or remove it. CREDIT: https://www.khronos.org/opengl/wiki/Face_Culling
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     // Draw the Scene
@@ -303,7 +330,7 @@ function drawScene() {
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, bushTexture);
+    gl.bindTexture(gl.TEXTURE_2D, baseTexture);
     gl.uniform1i(shaderProgram.samplerUniform, 0);
     
     gl.activeTexture(gl.TEXTURE1);
@@ -313,6 +340,10 @@ function drawScene() {
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, ambientOccTexture);
     gl.uniform1i(shaderProgram.ambientMapUniform, 2);
+
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, roughnessTexture);
+    gl.uniform1i(shaderProgram.roughnessUniform, 3);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
@@ -339,6 +370,7 @@ function animate() {
 }
 
 function Frames() {
+    refitCanvas(gl);
     requestAnimFrame(Frames);
     drawScene();
     animate();
