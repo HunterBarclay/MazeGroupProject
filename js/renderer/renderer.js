@@ -206,29 +206,29 @@ var ambientOccTexture;
 var roughnessTexture;
 
 function initTextures() {
-    // baseTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_basecolor.jpg");
-    // normalTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_normal.jpg");
-    // ambientOccTexture = loadTexture("./textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    // baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
+    // normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
+    // ambientOccTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
 
-    // baseTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
-    // normalTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
-    // ambientOccTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
-    // roughnessTexture = loadTexture("./textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
+    // baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
+    // normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
+    // ambientOccTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
+    // roughnessTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
 
-    // baseTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_basecolor.jpg");
-    // normalTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_normal.jpg");
-    // ambientOccTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_ambientocclusion.jpg");
-    // roughnessTexture = loadTexture("./textures/style-brick2/Stylized_Bricks_002_roughness.jpg");
+    // baseTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_basecolor.jpg");
+    // normalTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_normal.jpg");
+    // ambientOccTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_ambientocclusion.jpg");
+    // roughnessTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_roughness.jpg");
 
-    // baseTexture = loadTexture("./textures/abstract-metal/Abstract_011_basecolor.jpg");
-    // normalTexture = loadTexture("./textures/abstract-metal/Abstract_011_normal.jpg");
-    // ambientOccTexture = loadTexture("./textures/abstract-metal/Abstract_011_ambientOcclusion.jpg");
-    // roughnessTexture = loadTexture("./textures/abstract-metal/Abstract_011_roughness.jpg");
+    // baseTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_basecolor.jpg");
+    // normalTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_normal.jpg");
+    // ambientOccTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_ambientOcclusion.jpg");
+    // roughnessTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_roughness.jpg");
 
-    baseTexture = loadTexture("./textures/metal/Metal_006_basecolor.jpg");
-    normalTexture = loadTexture("./textures/metal/Metal_006_normal.jpg");
-    ambientOccTexture = loadTexture("./textures/metal/Metal_006_ambientOcclusion.jpg");
-    roughnessTexture = loadTexture("./textures/metal/Metal_006_roughness.jpg");
+    baseTexture = loadTexture("./assets/textures/metal/Metal_006_basecolor.jpg");
+    normalTexture = loadTexture("./assets/textures/metal/Metal_006_normal.jpg");
+    ambientOccTexture = loadTexture("./assets/textures/metal/Metal_006_ambientOcclusion.jpg");
+    roughnessTexture = loadTexture("./assets/textures/metal/Metal_006_roughness.jpg");
 }
 
 function loadTexture(path) {
@@ -265,7 +265,7 @@ async function startHelloWebGL() {
     // first initialize webgl components
     var gl = initGLScene();
 
-    objMeshHandler = parseObjFile(await fetch('sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
+    objMeshHandler = parseObjFile(await fetch('assets/meshes/sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
     // objMeshHandler = generateCubeMesh();
 
     // now build basic geometry objects.
