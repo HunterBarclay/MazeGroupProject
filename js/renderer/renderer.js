@@ -160,27 +160,27 @@ function initGeometry() {
 
     cubeVertexPositionBuffer = gl.createBuffer();
     cubeVertexPositionBuffer.itemSize = 3;
-    cubeVertexPositionBuffer.numItems = cubeBatchInstance.getVertexBufferLength() / 3;
+    cubeVertexPositionBuffer.numItems = (cubeBatchInstance.getVertexBufferSize() / Float32Array.BYTES_PER_ELEMENT) / 3;
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getVertexBufferLength(), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, cubeBatchInstance.getVertexBufferSize() * 10, gl.STATIC_DRAW);
 
     cubeVertexIndexBuffer = gl.createBuffer();
     cubeVertexIndexBuffer.itemSize = 1;
-    cubeVertexIndexBuffer.numItems = cubeBatchInstance.getIndexBufferLength();
+    cubeVertexIndexBuffer.numItems = cubeBatchInstance.getIndexBufferSize() / Uint32Array.BYTES_PER_ELEMENT;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getIndexBufferLength(), gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeBatchInstance.getIndexBufferSize(), gl.STATIC_DRAW);
 
     cubeVertexNormalBuffer = gl.createBuffer();
     cubeVertexNormalBuffer.itemSize = 3;
-    cubeVertexNormalBuffer.numItems = cubeBatchInstance.getNormalBufferLength() / 3;
+    cubeVertexNormalBuffer.numItems = (cubeBatchInstance.getNormalBufferSize() / Float32Array.BYTES_PER_ELEMENT) / 3;
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getNormalBufferLength(), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, cubeBatchInstance.getNormalBufferSize(), gl.STATIC_DRAW);
 
     cubeVertexTextureCoordBuffer = gl.createBuffer();
     cubeVertexTextureCoordBuffer.itemSize = 2;
-    cubeVertexTextureCoordBuffer.numItems = cubeBatchInstance.getTexCoordBufferLength() / 2;
+    cubeVertexTextureCoordBuffer.numItems = (cubeBatchInstance.getTexCoordBufferSize() / Float32Array.BYTES_PER_ELEMENT) / 2;
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getTexCoordBufferLength(), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, cubeBatchInstance.getTexCoordBufferSize(), gl.STATIC_DRAW);
 
     cubeBatchInstance.writeInstanceToBuffer(
         gl,

@@ -14,31 +14,31 @@ class BatchInstance {
     }
 
     /**
-     * Returns the length of data that will be appended to Vertex Buffer 
+     * Returns the length of data in bytes that will be appended to Vertex Buffer 
      */
-    getVertexBufferLength() {
-        return this.meshData.vertexArray.length;
+    getVertexBufferSize() {
+        return this.meshData.vertexArray.length * Float32Array.BYTES_PER_ELEMENT;
     }
 
     /**
-     * Returns the length of data that will be appended to Index Buffer 
+     * Returns the length of data in bytes that will be appended to Index Buffer 
      */
-    getIndexBufferLength() {
-        return this.meshData.indexArray.length;
+    getIndexBufferSize() {
+        return this.meshData.indexArray.length * Uint32Array.BYTES_PER_ELEMENT;
     }
 
     /**
-     * Returns the length of data that will be appended to Normal Buffer 
+     * Returns the length of data in bytes that will be appended to Normal Buffer 
      */
-    getNormalBufferLength() {
-        return this.meshData.normalArray.length;
+    getNormalBufferSize() {
+        return this.meshData.normalArray.length * Float32Array.BYTES_PER_ELEMENT;
     }
 
     /**
-     * Returns the length of data that will be appended to TexCoord Buffer 
+     * Returns the length of data in bytes that will be appended to TexCoord Buffer 
      */
-    getTexCoordBufferLength() {
-        return this.meshData.texCoordArray.length;
+    getTexCoordBufferSize() {
+        return this.meshData.texCoordArray.length * Float32Array.BYTES_PER_ELEMENT;
     }
 
     /**
@@ -80,7 +80,7 @@ class BatchInstance {
         {
             // The theory is that calling bufferSubData has a lot of overhead, so allocating all the altered data
             // into an array, then loading the array into the buffer is faster. Who knows if thats true.
-            var tmpVertBuf = new Float32Array(this.getVertexBufferLength());
+            var tmpVertBuf = new Float32Array(this.meshData.vertexArray.length);
             for (var i = 0; i < tmpVertBuf.length; i++) {
                 tmpVertBuf[i] = this.meshData.vertexArray[i] + this.position[i % 3];
             }
@@ -95,6 +95,13 @@ class BatchInstance {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
         gl.bufferSubData(gl.ARRAY_BUFFER, texCoordOffset, this.meshData.texCoordArray);
+
+        return [
+            vertexOffset + this.getVertexBufferSize(),
+            indexOffset + this.getIndexBufferSize(),
+            normalOffset + this.getNormalBufferSize(),
+            texCoordOffset + this.getTexCoordBufferSize()
+        ];
     }
 }
 
