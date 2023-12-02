@@ -68,6 +68,51 @@ async function getShader(gl, type, src) {
 }
 
 
+
+//Will change over the next two days, currently testing 12/1/2023 - Jordan
+
+
+//Source(s):
+//https://docs.gl/es2/
+/**
+ * @param {WebGLRenderingContext} gl - WebGL Context
+ * @param {Array<BatchInstance>} batchInstances - Array of BatchInstance objects
+ * @param {Number} batchSize - Number of instances to load per call
+ * @param {Number} startIndex - Index to start loading instances from
+ * 
+ * @returns {Object}
+ * - loadedCount: Number of BatchInstance objects loaded
+ * - remainingBatchInstances: Remaining BatchInstance objects to load
+ */
+function loadBatchInstances(gl, batchInstances, batchSize, initialIndex = 0) {
+    const totalInstances = batchInstances.length;
+    const remainingInstances = totalInstances - initialIndex;
+    const instancesToLoad = Math.min(batchSize, remainingInstances);
+
+    let loadedCount = 0;
+
+    for (let i = initialIndex; i < initialIndex + instancesToLoad; i++) {
+
+        //Need to load data into buffers here
+
+
+
+        loadedCount++;
+
+    }
+
+    const loadedInstancesCount = startIndex + instancesToLoad;
+    const remainingBatchInstances = batchInstances.slice(loadedInstancesCount);
+
+    return {
+        loadedCount: loadedInstancesCount,
+        remainingBatchInstances,
+    };
+
+
+}
+
+
 var shaderProgram;
 
 async function initShaders() {
