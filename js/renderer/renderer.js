@@ -58,6 +58,7 @@ async function getShader(gl, type, src) {
         return null;
     }
 
+    console.log(str);
     gl.shaderSource(shader, str);
     gl.compileShader(shader);
 
@@ -73,8 +74,8 @@ async function getShader(gl, type, src) {
 var shaderProgram;
 
 async function initShaders() {
-    var fragmentShader = await getShader(gl, "frag", "/shaders/test-cube-fs.glsl");
-    var vertexShader = await getShader(gl, "vert", "/shaders/test-cube-vs.glsl");
+    var fragmentShader = await getShader(gl, "frag", "./shaders/test-cube-fs.glsl");
+    var vertexShader = await getShader(gl, "vert", "./shaders/test-cube-vs.glsl");
 
     shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
