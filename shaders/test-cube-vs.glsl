@@ -10,7 +10,6 @@ uniform vec3 uDirLight;
 varying vec2 vTextureCoord;
 varying vec3 vNormal;
 varying vec3 vTangent;
-varying vec3 vAmbient;
 varying float vNormTheta;
 varying vec3 vFragPos;
 
@@ -47,8 +46,6 @@ void main(void) {
     gl_Position = uPMatrix * uVMatrix * uMVMatrix * vec4(pos, 1.0);
 
     vTextureCoord = aTextureCoord;
-
-    vAmbient = vec3(0.7, 0.7, 0.7);
 
     mat4 rotMat = uMVMatrix;
     rotMat[3][0] = 0.0;

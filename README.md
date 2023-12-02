@@ -1,16 +1,33 @@
 # Maze Group Project
 This is a group project for CS464. Team is Hunter Barclay, Josh Martin, Jordan Casper.
 
+## Usage
+This web app can be used with a simple http server and accessed by most if not all web browsers.
+
+For http servers, theres a number of quick options for testing:
+- NPM package `http-server`:
+    ```
+    $ npm install -g http-server
+    $ cd /path/to/repo/
+    $ http-server
+    ```
+- Golang package `claat`:
+    ```
+    $ go install github.com/googlecodelabs/tools/claat@latest
+    $ cd /path/to/repo/
+    $ claat serve
+    ```
+- Python `http.server`:
+    ```
+    $ cd /path/to/repo/
+    $ python3 -m http.server
+    ```
+
 ## Planning
 [Trello Board](https://trello.com/b/FvLTHeI2/maze).
 
 ## Technologies Used
 This project will use JavaScript within an html page. We will make use of WebGL for 3d graphics.
-
-## License
-This repository is under the [MIT License](/LICENSE.md).
-
-Read below to see which assets/files were sourced under different licenses.
 
 ## The Code
 ### Core Components
@@ -38,12 +55,17 @@ With making use of batch rendering, we'll be using frustrum culling to determine
 
 ## Assets
 ### Meshes
-The [Sphere Mesh](/assets/meshes/sphere.obj) was created in Blender.
+The [Sphere Mesh](/assets/meshes/sphere.obj) was created in Blender, used for testing materials.
 
 ### Textures
 The following textures were all distributed under a [Creative Commons License](/assets/textures/CC_LICENSE.md) and were sourced from [3D Textures](https://3dtextures.me/):
 - [Terracotta Tiles Textures](/assets/textures/style-brick2/)
-- [Stylized Bricks Textures](/assets/textures/style-brick2/)
+- [Stylized Bricks Textures](/assets/textures/style-brick/)
 - [Stylized Grass Textures](/assets/textures/style-grass/)
-- [Abstract Metal Textures](/assets/textures/abstract-metal/)
-- [Basic Metal Textures](/assets/textures/metal/)
+- [Stylized Dry Mud Textures](/assets/textures/style-dry-mud/)
+- [Ground Dirt Textures](/assets/textures/ground-dirt/)
+
+## License
+This repository is under the [MIT License](/LICENSE.md).
+
+Read below to see which assets/files were sourced under different licenses.

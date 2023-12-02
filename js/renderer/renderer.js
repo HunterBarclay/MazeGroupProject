@@ -114,6 +114,10 @@ async function initShaders() {
     shaderProgram.roughnessUniform = gl.getUniformLocation(shaderProgram, "uRoughness");
 
     shaderProgram.dirLight = gl.getUniformLocation(shaderProgram, "uDirLight");
+    shaderProgram.textureScaleUniform = gl.getUniformLocation(shaderProgram, "uTextureScale");
+    shaderProgram.specularIntensityUniform = gl.getUniformLocation(shaderProgram, "uSpecularIntensity");
+    shaderProgram.diffuseIntensityUniform = gl.getUniformLocation(shaderProgram, "uDiffuseIntensity");
+    shaderProgram.ambientLightColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientLightColor");
 }
 
 
@@ -209,6 +213,7 @@ function initTextures() {
     // baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
     // normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
     // ambientOccTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    // roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
 
     // baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
     // normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
@@ -220,15 +225,15 @@ function initTextures() {
     // ambientOccTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_ambientocclusion.jpg");
     // roughnessTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_roughness.jpg");
 
-    // baseTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_basecolor.jpg");
-    // normalTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_normal.jpg");
-    // ambientOccTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_ambientOcclusion.jpg");
-    // roughnessTexture = loadTexture("./assets/textures/abstract-metal/Abstract_011_roughness.jpg");
+    // baseTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_basecolor.jpg");
+    // normalTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_normal.jpg");
+    // ambientOccTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_ambientOcclusion.jpg");
+    // roughnessTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_roughness.jpg");
 
-    baseTexture = loadTexture("./assets/textures/metal/Metal_006_basecolor.jpg");
-    normalTexture = loadTexture("./assets/textures/metal/Metal_006_normal.jpg");
-    ambientOccTexture = loadTexture("./assets/textures/metal/Metal_006_ambientOcclusion.jpg");
-    roughnessTexture = loadTexture("./assets/textures/metal/Metal_006_roughness.jpg");
+    baseTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_basecolor.jpg");
+    normalTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_normal.jpg");
+    ambientOccTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_ambientOcclusion.jpg");
+    roughnessTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_roughness.jpg");
 }
 
 function loadTexture(path) {
@@ -278,7 +283,7 @@ async function startHelloWebGL() {
 
     // Found blend function here: https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     //   I actually found the blend stuff from someone having an issue, but I justed wanted alpha to do anything
-    gl.clearColor(0.4, 0.4, 0.4, 1.0);
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.enable(gl.DEPTH_TEST);
     // Back face culling
     gl.enable(gl.CULL_FACE);
@@ -348,6 +353,11 @@ function drawScene() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
 
+    gl.uniform2fv(shaderProgram.textureScaleUniform, [2.0, 2.0]);
+    gl.uniform1f(shaderProgram.specularIntensityUniform, 0.00);
+    gl.uniform1f(shaderProgram.diffuseIntensityUniform, 1.0);
+    gl.uniform3fv(shaderProgram.ambientLightColorUniform, [0.7, 0.7, 0.7]);
+
     // Drawing ints not shorts. CREDIT: https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
     var uints_for_indices = gl.getExtension("OES_element_index_uint");
     gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
@@ -370,7 +380,7 @@ function animate() {
 }
 
 function Frames() {
-    refitCanvas(gl);
+    refitCanvas(gl, camera);
     requestAnimFrame(Frames);
     drawScene();
     animate();

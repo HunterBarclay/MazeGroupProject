@@ -10,8 +10,8 @@ class Camera {
         this.nearZ = nearZ;
         this.farZ = farZ;
         this.fovY = fovY;
-        this.aspect = aspect;
 
+        this.setAspectRatio(aspect);
         this.setPosition([0.0, 0.0, 0.0]);
         this.setRotation([0.0, 0.0, 0.0]);
         this.clean();
@@ -21,8 +21,14 @@ class Camera {
         if (this.isDirty) {
             this.genTransformation();
             this.genFrustrumPlanes();
+            this.genProjection();
             this.isDirty = false;
         }
+    }
+
+    setAspectRatio(aspect) {
+        this.aspect = aspect;
+        this.isDirty = true;
     }
 
     setPosition(pos) {
@@ -43,6 +49,25 @@ class Camera {
         this.isDirty = true;
     }
 
+    getTransformation() {
+        this.clean();
+        return this.transformation;
+    }
+
+    getProjection() {
+        this.clean();
+        return this.projection;
+    }
+
+    /**
+     * @returns {Array<Plane>} Planes of the frustrum:
+     * [ near, far, left, right, top, bottom ]
+     */
+    getFrustrumPlanes() {
+        this.clean();
+        return this.frustrumPlanes;
+    }
+
     genTransformation() {
         mat4.identity(this.transformation);
         mat4.rotate(this.transformation, this.rotation[0] / 180.0 * 3.1415, [1, 0, 0]);
@@ -51,13 +76,8 @@ class Camera {
         mat4.translate(this.transformation, this.position);
     }
 
-    getTransformation() {
-        this.clean();
-        return this.transformation;
-    }
-
-    getProjection() {
-        return this.projection;
+    genProjection() {
+        this.projection = mat4.perspective(this.fovY, this.aspect, this.nearZ, this.farZ);
     }
 
     genFrustrumPlanes() {
@@ -103,15 +123,6 @@ class Camera {
                 )
             )
         ]
-    }
-
-    /**
-     * @returns {Array<Plane>} Planes of the frustrum:
-     * [ near, far, left, right, top, bottom ]
-     */
-    getFrustrumPlanes() {
-        this.clean();
-        return this.frustrumPlanes;
     }
 }
 
