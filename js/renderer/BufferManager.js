@@ -9,7 +9,10 @@ class BufferManager {
   
     }
 
+
+
     createBatchBuffer(meshHandler) {
+
         const batchBuffer = {
             vertexBuffer: this.gl.createBuffer(),
             indexBuffer: this.gl.createBuffer(),
@@ -21,19 +24,29 @@ class BufferManager {
         return batchBuffer; 
     }
 
-    bindVertexBuffer(buffer) {
+
+    //Adjusting this to match how we have it currently in initGeometry() - Jordan
+
+
+    populateVertexBuffer(buffer, data) {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.vertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
 
-    bindIndexBuffer(buffer) {
+    populateIndexBuffer(buffer, data) {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.indexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
 
-    bindNormalBuffer(buffer) {
+    populateNormalBuffer(buffer, data) {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.normalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
-    bindTexCoordBuffer(buffer) {
+
+
+    populateTexCoordBuffer(buffer, data) {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.texCoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
 
     deleteBatchBuffer(buffer) {
