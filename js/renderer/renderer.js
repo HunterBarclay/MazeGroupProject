@@ -69,40 +69,52 @@ async function getShader(gl, type, src) {
 
 
 
-//Will change over the next two days, currently testing 12/1/2023 - Jordan
-//Implement Queue instead of array object for holding the batch instances. 
 
 //Source(s):
 //https://docs.gl/es2/
 /**
  * @param {WebGLRenderingContext} gl - WebGL Context
- * @param {Array<BatchInstance>} batchInstances - Array of BatchInstance objects
+ * @param {Queue<Queue>} batchInstancesQueue - Queue of BatchInstance objects
  * @param {Number} batchSize - Number of instances to load per call
- * @param {Number} startIndex - Index to start loading instances from
+ * @param {Number} initialIndex - Index to start loading instances from
  * 
- * @returns {Object}
- * - loadedCount: Number of BatchInstance objects loaded
- * - remainingBatchInstances: Remaining BatchInstance objects to load
+ * @returns {number} - loadedCount: Number of BatchInstance objects loaded
+ * 
  */
-function loadBatchInstances(gl, batchInstances, batchSize, initialIndex = 0) {
-    const totalInstances = batchInstances.length;
+function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0) {
+    const totalInstances = batchInstancesQueue.length;
     const remainingInstances = totalInstances - initialIndex;
     const instancesToLoad = Math.min(batchSize, remainingInstances);
 
     let loadedCount = 0;
 
     for (let i = initialIndex; i < initialIndex + instancesToLoad; i++) {
+        const batchInstance = batchInstancesQueue.dequeue();
 
-        //Need to load data into buffers here
+        // Calculate byte size for this BatchInstance
+        const byteSize =
+            batchInstance.getVertexBufferSize() +
+            batchInstance.getIndexBufferSize() +
+            batchInstance.getNormalBufferSize() +
+            batchInstance.getTexCoordBufferSize();
 
+        // Load data into buffers
+        const vertexOffset = i * byteSize;
+        const indexOffset = vertexOffset + batchInstance.getVertexBufferSize();
+        const normalOffset = indexOffset + batchInstance.getIndexBufferSize();
+        const texCoordOffset = normalOffset + batchInstance.getNormalBufferSize();
+
+        batchInstance.writeInstanceToBuffer(
+            gl,
+            vertexOffset, cubeVertexPositionBuffer,
+            indexOffset, cubeVertexIndexBuffer,
+            normalOffset, cubeVertexNormalBuffer,
+            texCoordOffset, cubeVertexTextureCoordBuffer
+        );
 
 
         loadedCount++;
-
     }
-
-    const loadedInstancesCount = startIndex + instancesToLoad;
-    const remainingBatchInstances = batchInstances.slice(loadedInstancesCount);
 
     return loadedCount;
 }
@@ -196,7 +208,7 @@ var cubeMeshHandler;
 
 function initGeometry() {
 
-    const numBatchInstances = 4;
+    const numBatchInstances = 5;
     
     cubeMeshHandler = generateCubeMesh();
 
@@ -308,7 +320,7 @@ var zPos = -3.0;
 const speed = 0.002;
 
 function drawScene() {
-    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);w
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const instances = [
@@ -319,6 +331,17 @@ function drawScene() {
         new BatchInstance(cubeMeshHandler, [ 0.0, -0.7, 0.0])
     ];
 
+    const batchInstancesQueue = new Queue();
+
+    instances.forEach(instance => {
+        batchInstancesQueue.enqueue(instance);
+    });
+
+    const batchSize = 5; // Adjust the batch size as needed
+
+    
+
+    
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
     pMatrix = camera.getProjection();
 
@@ -349,12 +372,17 @@ function drawScene() {
     // Drawing ints not shorts. CREDIT: https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
     var uints_for_indices = gl.getExtension("OES_element_index_uint");
 
-    var totalLoaded = 0;
+
+    let currentIndex = 0;
+    let totalLoaded = 0;
+
     do {
-        var loaded = loadBatchInstances(gl, instances, instances.length, totalLoaded);
-        gl.drawElements(gl.TRIANGLES, instances[0].getIndexBufferSize() / Uint32Array.BYTES_PER_ELEMENT, gl.UNSIGNED_INT, 0);
-        totalLoaded += loaded;
-    } while (totalLoaded < instances.length);
+        var loadedCount = loadBatchInstances(gl, batchInstancesQueue, batchSize, currentIndex);
+        totalLoaded += loadedCount;
+        currentIndex += loadedCount;
+        console.log(`Loaded ${loadedCount} instances. Total loaded: ${totalLoaded}`);
+        //gl.drawElements(gl.TRIANGLES, instances[0].getIndexBufferSize() / Uint32Array.BYTES_PER_ELEMENT, gl.UNSIGNED_INT, 0);
+    } while (currentIndex < instances.length);
 }
 
 
