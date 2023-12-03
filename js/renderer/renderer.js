@@ -70,7 +70,7 @@ async function getShader(gl, type, src) {
 
 
 //Will change over the next two days, currently testing 12/1/2023 - Jordan
-
+//Implement Queue instead of array object for holding the batch instances. 
 
 //Source(s):
 //https://docs.gl/es2/
