@@ -1,26 +1,31 @@
 /**
- * Array based Queue Class
- * 
+ * Object based Queue Class
+ * Source: JavaScript: The Definitive Guide by David Flanagan 
  */
 
 class Queue {
     constructor() {
-        this.elements = [];
+      this.elements = {};
+      this.head = 0;
+      this.tail = 0;
     }
-
     enqueue(element) {
-        this.elements.push(element);
+      this.elements[this.tail] = element;
+      this.tail++;
     }
-
     dequeue() {
-        return this.elements.shift();
+      const item = this.elements[this.head];
+      delete this.elements[this.head];
+      this.head++;
+      return item;
     }
-
-    isEmpty() {
-        return this.elements.length === 0;
+    peek() {
+      return this.elements[this.head];
     }
-
-    size() {
-        return this.elements.length;
+    get length() {
+      return this.tail - this.head;
     }
-}
+    get isEmpty() {
+      return this.length === 0;
+    }
+  }
