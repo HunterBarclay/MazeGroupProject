@@ -206,6 +206,8 @@ var cubeVertexNormalBuffer;
 
 var cubeMeshHandler;
 
+
+//cubeBatchInstance needs to be initialized
 function initGeometry() {
 
     const numBatchInstances = 5;
@@ -381,7 +383,7 @@ function drawScene() {
         totalLoaded += loadedCount;
         currentIndex += loadedCount;
         console.log(`Loaded ${loadedCount} instances. Total loaded: ${totalLoaded}`);
-        //gl.drawElements(gl.TRIANGLES, instances[0].getIndexBufferSize() / Uint32Array.BYTES_PER_ELEMENT, gl.UNSIGNED_INT, 0);
+        gl.drawElements(gl.TRIANGLES, instances[0].getIndexBufferSize() / Uint32Array.BYTES_PER_ELEMENT, gl.UNSIGNED_INT, 0);
     } while (currentIndex < instances.length);
 }
 
