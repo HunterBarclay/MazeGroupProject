@@ -77,18 +77,22 @@ class BatchInstance {
         texCoordBuffer
     ) {
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        {
-            // The theory is that calling bufferSubData has a lot of overhead, so allocating all the altered data
-            // into an array, then loading the array into the buffer is faster. Who knows if thats true.
-            var tmpVertBuf = new Float32Array(this.meshData.vertexArray.length);
-            for (var i = 0; i < tmpVertBuf.length; i++) {
-                tmpVertBuf[i] = this.meshData.vertexArray[i] + this.position[i % 3];
-            }
-            gl.bufferSubData(gl.ARRAY_BUFFER, vertexOffset, tmpVertBuf);
-        }
+        gl.bufferSubData(
+            gl.ARRAY_BUFFER,
+            vertexOffset, 
+            this.meshData.vertexArray.map(
+                (x, i) => x + this.position[i % 3]
+            )
+        );
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, indexOffset, this.meshData.indexArray);
+        gl.bufferSubData(
+            gl.ELEMENT_ARRAY_BUFFER,
+            indexOffset,
+            this.meshData.indexArray.map(
+                x => x + vertexOffset / (Float32Array.BYTES_PER_ELEMENT * 3)
+            )
+        );
 
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
         gl.bufferSubData(gl.ARRAY_BUFFER, normalOffset, this.meshData.normalArray);

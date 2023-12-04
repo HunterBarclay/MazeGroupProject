@@ -85,7 +85,7 @@ async function getShader(gl, type, src) {
  */
 function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0) {
     const totalInstances = batchInstancesQueue.length;
-    const remainingInstances = totalInstances - initialIndex;
+    const remainingInstances = totalInstances;
     const instancesToLoad = Math.min(batchSize, remainingInstances);
 
     let loadedCount = 0;
@@ -106,11 +106,11 @@ function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0
             totalTexCoordOffset, bufferManager.getTexCoordBuffer()
         );
 
-                // Increment offsets by the instance's buffer size
-                totalVertexOffset += batchInstance.getVertexBufferSize();
-                totalIndexOffset += batchInstance.getIndexBufferSize();
-                totalNormalOffset += batchInstance.getNormalBufferSize();
-                totalTexCoordOffset += batchInstance.getTexCoordBufferSize();
+        // Increment offsets by the instance's buffer size
+        totalVertexOffset += batchInstance.getVertexBufferSize();
+        totalIndexOffset += batchInstance.getIndexBufferSize();
+        totalNormalOffset += batchInstance.getNormalBufferSize();
+        totalTexCoordOffset += batchInstance.getTexCoordBufferSize();
 
 
         loadedCount++;
@@ -306,11 +306,13 @@ function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const instances = [
-        new BatchInstance(cubeMeshHandler, [-0.7,  0.0, 0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0, 0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.7,  0.0, 0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0,  0.7, 0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0, -0.7, 0.0])
+        new BatchInstance(cubeMeshHandler, [-0.7,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.7,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.7,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0, -0.7,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.7]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0, -0.7])
     ];
 
     const batchInstancesQueue = new Queue();
@@ -365,7 +367,7 @@ function drawScene() {
         totalLoaded += loadedCount;
         currentIndex += loadedCount;
         console.log(`Loaded ${loadedCount} instances. Total loaded: ${totalLoaded}`);
-        gl.drawElements(gl.TRIANGLES, instances[0].getIndexBufferSize() / Uint32Array.BYTES_PER_ELEMENT, gl.UNSIGNED_INT, 0);
+        gl.drawElements(gl.TRIANGLES, instances[0].meshData.indexArray.length * loadedCount, gl.UNSIGNED_INT, 0);
     } while (currentIndex < instances.length);
 }
 
@@ -378,9 +380,9 @@ function animate() {
         var elapsed = timeNow - lastTime;
 
         // here we could change variables to adjust rotations for animation
-        yRot += elapsed * 0.05;
-        zRot += elapsed * 0.1;
-        xRot += elapsed * 0.2;
+        // yRot += elapsed * 0.05;
+        // zRot += elapsed * 0.1;
+        // xRot += elapsed * 0.2;
     }
     lastTime = timeNow;
 }
