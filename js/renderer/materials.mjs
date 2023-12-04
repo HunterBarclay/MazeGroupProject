@@ -14,7 +14,6 @@ async function getShader(gl, type, src) {
     var str = await fetch(src, {cache: "no-store"}).then(x => x.text());
 
     var shader = gl.createShader(type);
-    console.log(str);
     gl.shaderSource(shader, str);
     gl.compileShader(shader);
 
@@ -49,7 +48,7 @@ export async function getShaderProgram(gl, vertSrc, fragSrc) {
     return shaderProgram;
 }
 
-class Material {
+export class Material {
     
     /**
      * Constructs a new material with a given shader program.
@@ -82,11 +81,14 @@ class Material {
      * Binds buffers and their corresponding pointers
      * 
      * @param {WebGLRenderbuffer} gl Rendering Context
-     * @param {Object} buffers Object containing buffers. Dependendant on implementation
+     * @param {WebGLBuffer?} positionBuffer
+     * @param {WebGLBuffer?} normalBuffer
+     * @param {WebGLBuffer?} textureCoordBuffer
+     * @param {WebGLBuffer?} indexBuffer  
      * 
      * @abstract
      */
-    bindVertexPointers(gl) { console.error("Must be overriden"); }
+    bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer) { console.error("Must be overriden"); }
 }
 
 export class TestCubeMaterial extends Material {
@@ -195,26 +197,23 @@ export class TestCubeMaterial extends Material {
      * Binds buffers and their corresponding pointers
      * 
      * @param {WebGLRenderbuffer} gl Rendering Context
-     * @param {Object} buffers Object containing buffers. Following makeup:
-     * {
-     *  positionBuffer: WebGLBuffer,
-     *  normalBuffer: WebGLBuffer,
-     *  textureCoordBuffer: WebGLBuffer,
-     *  indexBuffer, WebGLBuffer
-     * }
+     * @param {WebGLBuffer} positionBuffer
+     * @param {WebGLBuffer} normalBuffer
+     * @param {WebGLBuffer} textureCoordBuffer
+     * @param {WebGLBuffer} indexBuffer
      * 
      * @abstract
      */
-    bindVertexPointers(gl, buffers) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer);
+    bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
         gl.vertexAttribPointer(this.positionAttribute, 3, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normalBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
         gl.vertexAttribPointer(this.normalAttribute, 3, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoordBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
         gl.vertexAttribPointer(this.textureCoordAttribute, 2, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     }
 }

@@ -1,11 +1,13 @@
 import { mat4 } from "../util/glMatrix_util.js";
 import { requestAnimFrame } from "../util/webgl-utils.js";
 import BatchInstance from "./batch-instance.mjs";
-import { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
+import MeshHandler, { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
 import { parseObjFile } from "../util/obj-parser.mjs";
 import refitCanvas from "../util/refit-canvas.mjs";
 import { TestCubeMaterial, getShaderProgram } from "./materials.mjs";
+import BatchGeometry from "./batch-geometry.mjs";
+import { Mesh } from "./mesh.mjs";
 
 var gl;
 
@@ -55,46 +57,36 @@ var cubeVertexNormalBuffer;
 var objMeshHandler;
 var cubeBatchInstance;
 
-function initGeometry() {
-    
-    // cubeBatchInstance = new BatchInstance(generateCubeMesh(), [0.0, 0.0, 0.0]);
-    cubeBatchInstance = new BatchInstance(objMeshHandler, [0.0, 0.0, 0.0]);
+/** @type {BatchGeometry} */
+var batchGeo;
 
-    cubeVertexPositionBuffer = gl.createBuffer();
-    cubeVertexPositionBuffer.itemSize = 3;
-    cubeVertexPositionBuffer.numItems = cubeBatchInstance.getVertexBufferLength() / 3;
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getVertexBufferLength(), gl.STATIC_DRAW);
-
-    cubeVertexIndexBuffer = gl.createBuffer();
-    cubeVertexIndexBuffer.itemSize = 1;
-    cubeVertexIndexBuffer.numItems = cubeBatchInstance.getIndexBufferLength();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getIndexBufferLength(), gl.STATIC_DRAW);
-
-    cubeVertexNormalBuffer = gl.createBuffer();
-    cubeVertexNormalBuffer.itemSize = 3;
-    cubeVertexNormalBuffer.numItems = cubeBatchInstance.getNormalBufferLength() / 3;
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getNormalBufferLength(), gl.STATIC_DRAW);
-
-    cubeVertexTextureCoordBuffer = gl.createBuffer();
-    cubeVertexTextureCoordBuffer.itemSize = 2;
-    cubeVertexTextureCoordBuffer.numItems = cubeBatchInstance.getTexCoordBufferLength() / 2;
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getTexCoordBufferLength(), gl.STATIC_DRAW);
-
-    cubeBatchInstance.writeInstanceToBuffer(
-        gl,
-        0, cubeVertexPositionBuffer,
-        0, cubeVertexIndexBuffer,
-        0, cubeVertexNormalBuffer,
-        0, cubeVertexTextureCoordBuffer
-    );
-}
+/** @type {MeshHandler} */
+var cubeMeshHandler;
 
 /** @type {TestCubeMaterial} */
 var testCubeMaterial;
+
+/** @type {Mesh} */
+var batchMesh;
+
+//cubeBatchInstance needs to be initialized
+async function initMeshes() {
+    const numBatchInstances = 7;
+
+    cubeMeshHandler = generateCubeMesh();
+    batchGeo = new BatchGeometry(gl, cubeMeshHandler, numBatchInstances);
+
+    testCubeMaterial = new TestCubeMaterial(
+        gl,
+        await getShaderProgram(gl, "./shaders/test-cube-vs.glsl", "./shaders/test-cube-fs.glsl")
+    );
+
+    testCubeMaterial.camera = new Camera(0.01, 50, 45, gl.viewportWidth / gl.viewportHeight);
+    testCubeMaterial.textureScale = [5.0, 5.0];
+    testCubeMaterial.specularIntensity = 0.6;
+
+    batchMesh = new Mesh(batchGeo, testCubeMaterial);
+}
 
 function initTextures() {
     // baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
@@ -160,17 +152,8 @@ async function startHelloWebGL() {
     objMeshHandler = parseObjFile(await fetch('assets/meshes/sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
     // objMeshHandler = generateCubeMesh();
 
-    testCubeMaterial = new TestCubeMaterial(
-        gl,
-        await getShaderProgram(gl, "./shaders/test-cube-vs.glsl", "./shaders/test-cube-fs.glsl")
-    );
-
+    await initMeshes();
     initTextures();
-    initGeometry();
-
-    testCubeMaterial.camera = new Camera(0.01, 50, 45, gl.viewportWidth / gl.viewportHeight);
-    testCubeMaterial.textureScale = [5.0, 5.0];
-    testCubeMaterial.specularIntensity = 0.6;
 
     // Found blend function here: https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     //   I actually found the blend stuff from someone having an issue, but I justed wanted alpha to do anything
@@ -204,6 +187,18 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    const instances = [
+        new BatchInstance(cubeMeshHandler, [-0.7,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.7,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.7,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0, -0.7,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.7]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0, -0.7])
+    ];
+
+    batchGeo.batchInstances = instances;
+    
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
     testCubeMaterial.camera.setPosition([0.0, 0.0, zPos]);
 
@@ -215,18 +210,20 @@ function drawScene() {
 
     testCubeMaterial.mvMatrix = mvMatrix;
 
-    testCubeMaterial.loadUniforms(gl);
-    testCubeMaterial.bindVertexPointers(
-        gl,
-        {
-            positionBuffer: cubeVertexPositionBuffer,
-            normalBuffer: cubeVertexNormalBuffer,
-            textureCoordBuffer: cubeVertexTextureCoordBuffer,
-            indexBuffer: cubeVertexIndexBuffer
-        }
-    );
 
-    gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
+    // TODO: Update to have batches
+    // testCubeMaterial.loadUniforms(gl);
+    // testCubeMaterial.bindVertexPointers(
+    //     gl,
+    //     cubeVertexPositionBuffer,
+    //     cubeVertexNormalBuffer,
+    //     cubeVertexTextureCoordBuffer,
+    //     cubeVertexIndexBuffer
+    // );
+
+    // gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
+
+    batchMesh.draw(gl);
 }
 
 
