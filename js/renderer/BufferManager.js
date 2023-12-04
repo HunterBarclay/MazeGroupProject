@@ -5,60 +5,66 @@
 class BufferManager {
     constructor(gl) {
         this.gl = gl;
-        this.batchBuffers = []; 
-  
-    }
-
-
-
-    createBatchBuffer(meshHandler) {
-
-        const batchBuffer = {
-            vertexBuffer: this.gl.createBuffer(),
-            indexBuffer: this.gl.createBuffer(),
-            normalBuffer: this.gl.createBuffer(),
-            texCoordBuffer: this.gl.createBuffer(),
-            meshHandler: meshHandler 
+        this.batchBuffer = {
+            vertexBuffer: null,
+            indexBuffer: null,
+            normalBuffer: null,
+            texCoordBuffer: null,
+            meshHandler: null,
         };
-        this.batchBuffers.push(batchBuffer); 
-        return batchBuffer; 
     }
 
+    createBatchBuffer(meshHandler, vertexBufferSize, indexBufferSize, normalBufferSize, texCoordBufferSize) {
+        this.batchBuffer.meshHandler = meshHandler;
+        
+        this.batchBuffer.vertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.batchBuffer.vertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexBufferSize), this.gl.STATIC_DRAW);
+        
+        this.batchBuffer.indexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.batchBuffer.indexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indexBufferSize), this.gl.STATIC_DRAW);
+        
+        this.batchBuffer.normalBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.batchBuffer.normalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(normalBufferSize), this.gl.STATIC_DRAW);
+        
+        this.batchBuffer.texCoordBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.batchBuffer.texCoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(texCoordBufferSize), this.gl.STATIC_DRAW);
+        
+        return this.batchBuffer;
+    }
 
-    //Adjusting this to match how we have it currently in initGeometry() - Jordan
-
-
-    populateVertexBuffer(buffer, data) {
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.vertexBuffer);
+    populateVertexBuffer(data) {
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.batchBuffer.vertexBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
 
-    populateIndexBuffer(buffer, data) {
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.indexBuffer);
+    populateIndexBuffer(data) {
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.batchBuffer.indexBuffer);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
 
-    populateNormalBuffer(buffer, data) {
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.normalBuffer);
+    populateNormalBuffer(data) {
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.batchBuffer.normalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
+    }
+
+    populateTexCoordBuffer(data) {
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.batchBuffer.texCoordBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
     }
 
 
-    populateTexCoordBuffer(buffer, data) {
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.texCoordBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
+    deleteBatchBuffer() {        
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, 0);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, 0);
+        
+        this.gl.deleteBuffer(this.batchBuffer.vertexBuffer);
+        this.gl.deleteBuffer(this.batchBuffer.indexBuffer);
+        this.gl.deleteBuffer(this.batchBuffer.normalBuffer);
+        this.gl.deleteBuffer(this.batchBuffer.texCoordBuffer);
+        this.batchBuffer.meshHandler = null;
     }
-
-    deleteBatchBuffer(buffer) {
-        this.gl.deleteBuffer(buffer.vertexBuffer);
-        this.gl.deleteBuffer(buffer.indexBuffer);
-        this.gl.deleteBuffer(buffer.normalBuffer);
-        this.gl.deleteBuffer(buffer.texCoordBuffer);
-        const index = this.batchBuffers.indexOf(buffer);
-        if (index !== -1) {
-            this.batchBuffers.splice(index, 1);
-        }
-    }
-
-
 }
