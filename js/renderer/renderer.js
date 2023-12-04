@@ -3,7 +3,6 @@ import { requestAnimFrame } from "../util/webgl-utils.js";
 import BatchInstance from "./batch-instance.mjs";
 import { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
-import Queue from "./Queue.js";
 import BufferManager from "./BufferManager.js";
 
 var gl;
@@ -72,19 +71,19 @@ async function getShader(gl, type, src) {
 
 
 
-//Source(s):
+ //Source(s):
 //https://docs.gl/es2/
 /**
  * @param {WebGLRenderingContext} gl - WebGL Context
- * @param {Queue<Queue>} batchInstancesQueue - Queue of BatchInstance objects
+ * @param {Array<BatchInstance>} batchInstancesArray - Array of BatchInstance objects
  * @param {Number} batchSize - Number of instances to load per call
  * @param {Number} initialIndex - Index to start loading instances from
  * 
  * @returns {number} - loadedCount: Number of BatchInstance objects loaded
  * 
  */
-function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0) {
-    const totalInstances = batchInstancesQueue.length;
+function loadBatchInstances(gl, batchInstancesArray, batchSize, initialIndex = 0) {
+    const totalInstances = batchInstancesArray.length;
     const remainingInstances = totalInstances;
     const instancesToLoad = Math.min(batchSize, remainingInstances);
 
@@ -96,7 +95,7 @@ function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0
     let totalTexCoordOffset = 0;
 
     for (let i = initialIndex; i < initialIndex + instancesToLoad; i++) {
-        const batchInstance = batchInstancesQueue.dequeue();
+        const batchInstance = batchInstancesArray[i];
         
         batchInstance.writeInstanceToBuffer(
             gl,
@@ -207,7 +206,7 @@ var bufferManager;
 //cubeBatchInstance needs to be initialized
 function initGeometry() {
 
-    const numBatchInstances = 5;
+    const numBatchInstances = 7;
 
     bufferManager = new BufferManager(gl);
     
@@ -315,13 +314,8 @@ function drawScene() {
         new BatchInstance(cubeMeshHandler, [ 0.0,  0.0, -0.7])
     ];
 
-    const batchInstancesQueue = new Queue();
 
-    instances.forEach(instance => {
-        batchInstancesQueue.enqueue(instance);
-    });
-
-    const batchSize = 5; // Adjust the batch size as needed
+    const batchSize = 7; // Adjust the batch size as needed
 
     
 
@@ -363,7 +357,7 @@ function drawScene() {
     let totalLoaded = 0;
 
     do {
-        var loadedCount = loadBatchInstances(gl, batchInstancesQueue, batchSize, currentIndex);
+        var loadedCount = loadBatchInstances(gl, instances, batchSize, currentIndex);
         totalLoaded += loadedCount;
         currentIndex += loadedCount;
         console.log(`Loaded ${loadedCount} instances. Total loaded: ${totalLoaded}`);
