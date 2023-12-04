@@ -3,6 +3,7 @@ import { requestAnimFrame } from "../util/webgl-utils.js";
 import BatchInstance from "./batch-instance.mjs";
 import { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
+import BufferManager from "./BufferManager.js";
 
 var gl;
 
@@ -65,6 +66,56 @@ async function getShader(gl, type, src) {
     }
 
     return shader;
+}
+
+
+
+
+ //Source(s):
+//https://docs.gl/es2/
+/**
+ * @param {WebGLRenderingContext} gl - WebGL Context
+ * @param {Array<BatchInstance>} batchInstancesArray - Array of BatchInstance objects
+ * @param {Number} batchSize - Number of instances to load per call
+ * @param {Number} initialIndex - Index to start loading instances from
+ * 
+ * @returns {number} - loadedCount: Number of BatchInstance objects loaded
+ * 
+ */
+function loadBatchInstances(gl, batchInstancesArray, batchSize, initialIndex = 0) {
+    const totalInstances = batchInstancesArray.length;
+    const remainingInstances = totalInstances;
+    const instancesToLoad = Math.min(batchSize, remainingInstances);
+
+    let loadedCount = 0;
+
+    let totalVertexOffset = 0;
+    let totalIndexOffset = 0;
+    let totalNormalOffset = 0;
+    let totalTexCoordOffset = 0;
+
+    for (let i = initialIndex; i < initialIndex + instancesToLoad; i++) {
+        const batchInstance = batchInstancesArray[i];
+        
+        batchInstance.writeInstanceToBuffer(
+            gl,
+            totalVertexOffset, bufferManager.getVertexBuffer(),
+            totalIndexOffset, bufferManager.getIndexBuffer(),
+            totalNormalOffset, bufferManager.getNormalBuffer(),
+            totalTexCoordOffset, bufferManager.getTexCoordBuffer()
+        );
+
+        // Increment offsets by the instance's buffer size
+        totalVertexOffset += batchInstance.getVertexBufferSize();
+        totalIndexOffset += batchInstance.getIndexBufferSize();
+        totalNormalOffset += batchInstance.getNormalBufferSize();
+        totalTexCoordOffset += batchInstance.getTexCoordBufferSize();
+
+
+        loadedCount++;
+    }
+
+    return loadedCount;
 }
 
 
@@ -146,49 +197,33 @@ function generateViewMatrix(eyePos, lookDir = [0.0, 0.0, -1.0], up = [0.0, 1.0, 
     return m;
 }
 
-// create and initialize our geometry objects
-var cubeVertexPositionBuffer;
-var cubeVertexTextureCoordBuffer;
-var cubeVertexIndexBuffer;
-var cubeVertexNormalBuffer;
 
-var cubeBatchInstance;
+var cubeMeshHandler;
 
+var bufferManager; 
+
+
+//cubeBatchInstance needs to be initialized
 function initGeometry() {
+
+    const numBatchInstances = 7;
+
+    bufferManager = new BufferManager(gl);
     
-    cubeBatchInstance = new BatchInstance(generateCubeMesh(), [0.0, 0.0, 0.0]);
+    cubeMeshHandler = generateCubeMesh();
+    bufferManager.createBatchBuffer(cubeMeshHandler, numBatchInstances);
 
-    cubeVertexPositionBuffer = gl.createBuffer();
-    cubeVertexPositionBuffer.itemSize = 3;
-    cubeVertexPositionBuffer.numItems = cubeBatchInstance.getVertexBufferLength() / 3;
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getVertexBufferLength(), gl.STATIC_DRAW);
-
-    cubeVertexIndexBuffer = gl.createBuffer();
-    cubeVertexIndexBuffer.itemSize = 1;
-    cubeVertexIndexBuffer.numItems = cubeBatchInstance.getIndexBufferLength();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getIndexBufferLength(), gl.STATIC_DRAW);
-
-    cubeVertexNormalBuffer = gl.createBuffer();
-    cubeVertexNormalBuffer.itemSize = 3;
-    cubeVertexNormalBuffer.numItems = cubeBatchInstance.getNormalBufferLength() / 3;
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getNormalBufferLength(), gl.STATIC_DRAW);
-
-    cubeVertexTextureCoordBuffer = gl.createBuffer();
-    cubeVertexTextureCoordBuffer.itemSize = 2;
-    cubeVertexTextureCoordBuffer.numItems = cubeBatchInstance.getTexCoordBufferLength() / 2;
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * cubeBatchInstance.getTexCoordBufferLength(), gl.STATIC_DRAW);
-
-    cubeBatchInstance.writeInstanceToBuffer(
-        gl,
-        0, cubeVertexPositionBuffer,
-        0, cubeVertexIndexBuffer,
-        0, cubeVertexNormalBuffer,
-        0, cubeVertexTextureCoordBuffer
-    );
+    bufferManager.setVertexBufferItemSize(3);
+    bufferManager.setIndexBufferItemSize(1);
+    bufferManager.setNormalBufferItemSize(3);
+    bufferManager.setTexCoordBufferItemSize(2);
+    // cubeBatchInstance.writeInstanceToBuffer(
+    //     gl,
+    //     0, cubeVertexPositionBuffer,
+    //     0, cubeVertexIndexBuffer,
+    //     0, cubeVertexNormalBuffer,
+    //     0, cubeVertexTextureCoordBuffer
+    // );
 }
 
 
@@ -269,6 +304,22 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    const instances = [
+        new BatchInstance(cubeMeshHandler, [-0.7,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.7,  0.0,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.7,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0, -0.7,  0.0]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.7]),
+        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0, -0.7])
+    ];
+
+
+    const batchSize = 7; // Adjust the batch size as needed
+
+    
+
+    
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
     pMatrix = camera.getProjection();
 
@@ -280,25 +331,38 @@ function drawScene() {
     vMatrix = camera.getTransformation();
     // mvMatrix = mat4.multiply(mat4.inverse(mvMatrix), vMatrix);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    //Temp
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferManager.getVertexBuffer());
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, bufferManager.getVertexBufferItemSize(), gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferManager.getTexCoordBuffer());
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, bufferManager.getTexCoordBufferItemSize(), gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferManager.getNormalBuffer());
+    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, bufferManager.getNormalBufferItemSize(), gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, heightTexture);
     gl.uniform1i(shaderProgram.samplerUniform, 0);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferManager.getIndexBuffer());
     setMatrixUniforms();
 
     // Drawing ints not shorts. CREDIT: https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
     var uints_for_indices = gl.getExtension("OES_element_index_uint");
-    gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
+
+
+    let currentIndex = 0;
+    let totalLoaded = 0;
+
+    do {
+        var loadedCount = loadBatchInstances(gl, instances, batchSize, currentIndex);
+        totalLoaded += loadedCount;
+        currentIndex += loadedCount;
+        console.log(`Loaded ${loadedCount} instances. Total loaded: ${totalLoaded}`);
+        gl.drawElements(gl.TRIANGLES, instances[0].meshData.indexArray.length * loadedCount, gl.UNSIGNED_INT, 0);
+    } while (currentIndex < instances.length);
 }
 
 
@@ -310,9 +374,9 @@ function animate() {
         var elapsed = timeNow - lastTime;
 
         // here we could change variables to adjust rotations for animation
-        yRot += elapsed * 0.05;
-        zRot += elapsed * 0.1;
-        xRot += elapsed * 0.2;
+        // yRot += elapsed * 0.05;
+        // zRot += elapsed * 0.1;
+        // xRot += elapsed * 0.2;
     }
     lastTime = timeNow;
 }
