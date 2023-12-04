@@ -88,22 +88,14 @@ function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0
 
     let loadedCount = 0;
 
+    let totalVertexOffset = 0;
+    let totalIndexOffset = 0;
+    let totalNormalOffset = 0;
+    let totalTexCoordOffset = 0;
+
     for (let i = initialIndex; i < initialIndex + instancesToLoad; i++) {
         const batchInstance = batchInstancesQueue.dequeue();
-
-        // Calculate byte size for this BatchInstance
-        const byteSize =
-            batchInstance.getVertexBufferSize() +
-            batchInstance.getIndexBufferSize() +
-            batchInstance.getNormalBufferSize() +
-            batchInstance.getTexCoordBufferSize();
-
-        // Load data into buffers
-        const vertexOffset = i * byteSize;
-        const indexOffset = vertexOffset + batchInstance.getVertexBufferSize();
-        const normalOffset = indexOffset + batchInstance.getIndexBufferSize();
-        const texCoordOffset = normalOffset + batchInstance.getNormalBufferSize();
-
+        
         batchInstance.writeInstanceToBuffer(
             gl,
             vertexOffset, cubeVertexPositionBuffer,
@@ -111,6 +103,12 @@ function loadBatchInstances(gl, batchInstancesQueue, batchSize, initialIndex = 0
             normalOffset, cubeVertexNormalBuffer,
             texCoordOffset, cubeVertexTextureCoordBuffer
         );
+
+                // Increment offsets by the instance's buffer size
+                totalVertexOffset += batchInstance.getVertexBufferSize();
+                totalIndexOffset += batchInstance.getIndexBufferSize();
+                totalNormalOffset += batchInstance.getNormalBufferSize();
+                totalTexCoordOffset += batchInstance.getTexCoordBufferSize();
 
 
         loadedCount++;
