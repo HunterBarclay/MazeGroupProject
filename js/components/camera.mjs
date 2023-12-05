@@ -1,5 +1,5 @@
 import { addVector, crossProductVector, multVector, subtractVector } from "../renderer/mesh-handler.mjs";
-import { mat4 } from "../util/glMatrix_util.js";
+import { mat4 } from "../util/glMatrix_util.mjs";
 import Plane from "../util/plane.mjs";
 
 class Camera {

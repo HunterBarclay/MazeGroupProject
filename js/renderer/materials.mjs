@@ -1,4 +1,4 @@
-import { mat4 } from "../util/glMatrix_util.js";
+import { mat4 } from "../util/glMatrix_util.mjs";
 import Camera from "../components/camera.mjs";
 import { normalizeVector } from "./mesh-handler.mjs";
 

@@ -1,6 +1,7 @@
 import BatchInstance from "./batch-instance.mjs";
 import { Geometry } from "./geometry.mjs";
 import MeshHandler from "./mesh-handler.mjs";
+import { setBatchesDrawn, setMeshesDrawn } from "./renderer.mjs";
 
 /**
  * Class for managing Buffers
@@ -91,12 +92,18 @@ class BatchGeometry extends Geometry {
             return;
         }
 
+        var drawCalls = 0;
+
         var totalLoaded = 0;
         do {
             const loaded = this.loadBatchInstances(gl, totalLoaded);
-            totalLoaded++;
+            totalLoaded += loaded;
             gl.drawElements(gl.TRIANGLES, this.batchInstances[0].meshData.indexArray.length * loaded, gl.UNSIGNED_INT, 0);
+            drawCalls++;
         } while (totalLoaded < this.batchInstances.length);
+
+        setBatchesDrawn(drawCalls);
+        setMeshesDrawn(totalLoaded);
     }
 
     deleteBuffers() {        

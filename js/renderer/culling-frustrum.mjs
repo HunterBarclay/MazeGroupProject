@@ -3,9 +3,9 @@
  */
 
 import Camera from "../components/camera.mjs";
-import { generateMaze } from "../util/maze-gen.js";
+import { generateMaze } from "../util/maze-gen.mjs";
 
-class CullingFrustrum {
+export class CullingFrustrum {
 
     /**
      * 
@@ -15,6 +15,13 @@ class CullingFrustrum {
         this.camera = camera;
     }
 
+    /**
+     * Test if a bounding sphere in contained within the camera's frustrum.
+     * 
+     * @param {Array<Number>} center Vec3 defining center of bounding sphere.
+     * @param {Number} radius Radius of the bounding sphere.
+     * @returns {Boolean} Whether or not the sphere in contained in the camera's frustrum.
+     */
     testBoundingSphere(center, radius) {
         var planes = this.camera.getFrustrumPlanes();
         var res = true;

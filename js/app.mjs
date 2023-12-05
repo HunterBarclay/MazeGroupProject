@@ -1,4 +1,4 @@
-import startHelloWebGL from "./renderer/renderer.js";
+import startHelloWebGL from "./renderer/renderer.mjs";
 
 window.addEventListener("load", (_) => {
     startHelloWebGL();

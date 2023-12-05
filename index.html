@@ -30,8 +30,6 @@
 <!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
 
 <body>
-    <h1>Hello WebGL Simple Example</h1>
-
     <!-- embed the HTML5 Canvas Drawing object on the page.-->
     <!-- Name the canvas 'hellowebgl' for the javascript code. -->
     <div id="canvas-container">
@@ -40,8 +38,11 @@
         </canvas>
     </div>
 
-    <h3>Click and Hold Left-Click and look from left to right. WASD to move</h3>
-    <p id="cam-position">...</p>
+    <div id="info">
+        <p id="framerate">- ms (- fps)</p>
+        <p id="batches">- batches</p>
+        <p id="meshes">- meshes</p>
+    </div>
 
 </body>
 

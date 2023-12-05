@@ -1,5 +1,5 @@
-import { mat4 } from "../util/glMatrix_util.js";
-import { requestAnimFrame } from "../util/webgl-utils.js";
+import { mat4 } from "../util/glMatrix_util.mjs";
+import { requestAnimFrame } from "../util/webgl-utils.mjs";
 import BatchInstance from "./batch-instance.mjs";
 import MeshHandler, { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
@@ -8,6 +8,8 @@ import refitCanvas from "../util/refit-canvas.mjs";
 import { TestCubeMaterial, getShaderProgram } from "./materials.mjs";
 import BatchGeometry from "./batch-geometry.mjs";
 import { Mesh } from "./mesh.mjs";
+import { Maze, generateMaze } from "../util/maze-gen.mjs";
+import CullingFrustrum from "./culling-frustrum.mjs";
 
 var gl;
 
@@ -69,9 +71,18 @@ var testCubeMaterial;
 /** @type {Mesh} */
 var batchMesh;
 
+/** @type {Maze} */
+var maze;
+
+/** @type {Array<BatchInstance>} */
+var mazeWalls;
+
+/** @type {CullingFrustrum} */
+var cullingFrustrum;
+
 //cubeBatchInstance needs to be initialized
 async function initMeshes() {
-    const numBatchInstances = 7;
+    const numBatchInstances = 15;
 
     cubeMeshHandler = generateCubeMesh();
     batchGeo = new BatchGeometry(gl, cubeMeshHandler, numBatchInstances);
@@ -81,38 +92,57 @@ async function initMeshes() {
         await getShaderProgram(gl, "./shaders/test-cube-vs.glsl", "./shaders/test-cube-fs.glsl")
     );
 
-    testCubeMaterial.camera = new Camera(0.01, 50, 45, gl.viewportWidth / gl.viewportHeight);
-    testCubeMaterial.textureScale = [5.0, 5.0];
-    testCubeMaterial.specularIntensity = 0.6;
+    testCubeMaterial.camera = new Camera(0.01, 70, 45, gl.viewportWidth / gl.viewportHeight);
+    testCubeMaterial.textureScale = [1.0, 1.0];
+    testCubeMaterial.specularIntensity = 0.05;
 
     batchMesh = new Mesh(batchGeo, testCubeMaterial);
+
+    mazeWalls = [];
+    maze = generateMaze(10, 10, 0.5);
+    var mazeLayout = maze.getArrayLayout();
+
+    for (var z = 0; z < mazeLayout.length; z++) {
+        for (var x = 0; x < mazeLayout[z].length; x++) {
+            if (mazeLayout[z][x] == 'X') {
+                mazeWalls.push(new BatchInstance(
+                    cubeMeshHandler,
+                    [x * 2.0, 0.0, z * 2.0]
+                ));
+            }
+        }
+    }
+
+    batchGeo.batchInstances = mazeWalls;
+
+    cullingFrustrum = new CullingFrustrum(testCubeMaterial.camera);
 }
 
 function initTextures() {
-    // baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
-    // normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
-    // ambientOccTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
-    // roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
+    // testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
+    // testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
+    // testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    // testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
 
-    // baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
-    // normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
-    // ambientOccTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
-    // roughnessTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
+    testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
+    testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
+    testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
+    testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
 
-    // baseTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_basecolor.jpg");
-    // normalTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_normal.jpg");
-    // ambientOccTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_ambientocclusion.jpg");
-    // roughnessTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_roughness.jpg");
+    // testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_basecolor.jpg");
+    // testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_normal.jpg");
+    // testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_ambientocclusion.jpg");
+    // testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_roughness.jpg");
 
     // baseTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_basecolor.jpg");
     // normalTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_normal.jpg");
     // ambientOccTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_ambientOcclusion.jpg");
     // roughnessTexture = loadTexture("./assets/textures/style-dry-mud/Stylized_Dry_Mud_001_roughness.jpg");
 
-    testCubeMaterial.baseTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_basecolor.jpg");
-    testCubeMaterial.normalTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_normal.jpg");
-    testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_ambientOcclusion.jpg");
-    testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_roughness.jpg");
+    // testCubeMaterial.baseTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_basecolor.jpg");
+    // testCubeMaterial.normalTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_normal.jpg");
+    // testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_ambientOcclusion.jpg");
+    // testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_roughness.jpg");
 }
 
 function loadTexture(path) {
@@ -186,18 +216,6 @@ const speed = 0.002;
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    const instances = [
-        new BatchInstance(cubeMeshHandler, [-0.7,  0.0,  0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.7,  0.0,  0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0,  0.7,  0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0, -0.7,  0.0]),
-        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0,  0.7]),
-        new BatchInstance(cubeMeshHandler, [ 0.0,  0.0, -0.7])
-    ];
-
-    batchGeo.batchInstances = instances;
     
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
     testCubeMaterial.camera.setPosition([0.0, 0.0, zPos]);
@@ -210,6 +228,16 @@ function drawScene() {
 
     testCubeMaterial.mvMatrix = mvMatrix;
 
+    batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
+        const mat = mat4.create(testCubeMaterial.mvMatrix);
+        const pos = new Float32Array(3);
+        pos[0] = x.position[0];
+        pos[1] = x.position[1];
+        pos[2] = x.position[2];
+        const matRes = mat4.create();
+        const instancePos = mat4.multiplyVec3(mat, pos, matRes);
+        return cullingFrustrum.testBoundingSphere(instancePos, Math.sqrt(3));
+    });
 
     // TODO: Update to have batches
     // testCubeMaterial.loadUniforms(gl);
@@ -230,9 +258,11 @@ function drawScene() {
 var lastTime = 0;
 
 function animate() {
-    var timeNow = new Date().getTime();
+    var timeNow = Date.now();
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
+
+        setRefreshRate(elapsed);
 
         // here we could change variables to adjust rotations for animation
         // yRot += elapsed * 0.05;
@@ -241,6 +271,8 @@ function animate() {
     }
     lastTime = timeNow;
 }
+
+
 
 function Frames() {
     refitCanvas(gl, testCubeMaterial.camera);
@@ -276,7 +308,7 @@ function onMouseMove(event) {
     if (isDown) {
         if (event.shiftKey) { // If Shift, zoom
             zPos += (event.layerY - lastY) * -0.03;
-            zPos = Math.max(Math.min(zPos, 0), -7);
+            zPos = Math.max(Math.min(zPos, 0), -40);
             // 
         } else { // If not, rotate
             yRot += (event.layerX - lastX) * 0.7;
@@ -294,6 +326,21 @@ function onKeyDown(event) {
 
 function onKeyUp(event) {
     keys[event.key] = false;
+}
+
+// FEEDBACK
+
+function setRefreshRate(ms) {
+    const fps = (1000.0 / ms).toFixed(1);
+    document.getElementById("framerate").innerHTML = ms + " ms (" + fps + " fps)";
+}
+
+export function setBatchesDrawn(count) {
+    document.getElementById("batches").innerHTML = count + " batches";
+}
+
+export function setMeshesDrawn(count) {
+    document.getElementById("meshes").innerHTML = count + " meshes";
 }
 
 // EXPORTS

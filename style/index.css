@@ -8,8 +8,18 @@
     height: 100vh;
 }
 
-#hellowebgl {
+p {
+    color: #72a5f7;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#info {
     display: flex;
-    width: max-content;
-    height: max-content;
+    flex-direction: column;
+    position: fixed;
+    left: 10pt;
+    top: 10pt;
+
+    width: fit-content;
+    height: fit-content;
 }
