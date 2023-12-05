@@ -15,6 +15,8 @@ class BatchGeometry extends Geometry {
     batchInstances;
     /** @type {Number} */
     batchSize;
+    /** @type {MeshHandler} */
+    meshHandler
     
     /**
      * Constructs a new BufferManager 
@@ -25,6 +27,8 @@ class BatchGeometry extends Geometry {
      */
     constructor(gl, meshHandler, batchSize = 0) {
         super(gl);
+
+        this.meshHandler = meshHandler;
 
         if (batchSize === 0) {
             batchSize = Math.max(1, Math.floor(TARGET_SIZE_FOR_BATCH_BUFFERS / meshHandler.getByteSize()));

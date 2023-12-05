@@ -5,11 +5,12 @@ import MeshHandler, { generateCubeMesh, addVector, normalizeVector, multVector }
 import Camera from "../components/camera.mjs";
 import { parseObjFile } from "../util/obj-parser.mjs";
 import refitCanvas from "../util/refit-canvas.mjs";
-import { TestCubeMaterial, getShaderProgram } from "./materials.mjs";
+import { BasicEmissionMaterial, GetBasicEmissionShaderProgram, GetFullTextureShaderProgram, TestCubeMaterial, getShaderProgram } from "./materials.mjs";
 import BatchGeometry from "./batch-geometry.mjs";
 import { Mesh } from "./mesh.mjs";
 import { Maze, generateMaze } from "../util/maze-gen.mjs";
 import CullingFrustrum from "./culling-frustrum.mjs";
+import { BasicGeometry } from "./geometry.mjs";
 
 var gl;
 
@@ -50,25 +51,14 @@ function initGLScene() {
     return gl;
 }
 
-// create and initialize our geometry objects
-var cubeVertexPositionBuffer;
-var cubeVertexTextureCoordBuffer;
-var cubeVertexIndexBuffer;
-var cubeVertexNormalBuffer;
-
-var cubeBatchInstance;
-
-/** @type {BatchGeometry} */
-var batchGeo;
-
-/** @type {MeshHandler} */
-var cubeMeshHandler;
-
-/** @type {TestCubeMaterial} */
-var testCubeMaterial;
-
 /** @type {Mesh} */
 var batchMesh;
+
+/** @type {Mesh} */
+var startMarkerMesh;
+
+/** @type {Mesh} */
+var endMarkerMesh;
 
 /** @type {Maze} */
 var maze;
@@ -79,6 +69,9 @@ var mazeWalls;
 /** @type {CullingFrustrum} */
 var cullingFrustrum;
 
+/** @type {Camera} */
+var mainCamera;
+
 export function regenMaze(width, height, difficulty) {
     mazeWalls = [];
     maze = generateMaze(width, height, difficulty);
@@ -88,7 +81,7 @@ export function regenMaze(width, height, difficulty) {
         for (var x = 0; x < mazeLayout[z].length; x++) {
             if (mazeLayout[z][x] == 'X') {
                 mazeWalls.push(new BatchInstance(
-                    cubeMeshHandler,
+                    batchMesh.geometry.meshHandler,
                     [x * 2.0, 0.0, z * 2.0]
                 ));
             }
@@ -96,21 +89,18 @@ export function regenMaze(width, height, difficulty) {
     }
 }
 
-async function initMeshes() {
-    const numBatchInstances = 4; // If not specified, will calculate
+async function createBatchMesh() {
+    var cubeMeshHandler = generateCubeMesh();
 
-    cubeMeshHandler = generateCubeMesh();
-    console.log(cubeMeshHandler.getByteSize());
     // cubeMeshHandler = parseObjFile(await fetch('assets/meshes/sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
-    batchGeo = new BatchGeometry(gl, cubeMeshHandler /*, numBatchInstances */);
+    var batchGeo = new BatchGeometry(gl, cubeMeshHandler);
 
-    testCubeMaterial = new TestCubeMaterial(
+    var testCubeMaterial = new TestCubeMaterial(
         gl,
-        await getShaderProgram(gl, "./shaders/test-cube-vs.glsl", "./shaders/test-cube-fs.glsl")
+        await GetFullTextureShaderProgram(gl),
+        mainCamera
     );
-
-    testCubeMaterial.camera = new Camera(0.01, 140, 45, gl.viewportWidth / gl.viewportHeight);
-    testCubeMaterial.textureScale = [1.0, 1.0];
+    testCubeMaterial.textureScale = [0.25, 0.25];
     testCubeMaterial.specularIntensity = 0.1;
     testCubeMaterial.ambientLightColor = [0.2, 0.4, 0.6];
     testCubeMaterial.fogRadius = 135.0;
@@ -118,17 +108,53 @@ async function initMeshes() {
     testCubeMaterial.mvMatrix = mat4.identity(mat4.create());
 
     batchMesh = new Mesh(batchGeo, testCubeMaterial);
+}
 
-    regenMaze(50, 50, 0.5);
+async function createMarkerMesh(position, color) {
+    var cubeMeshHandler = generateCubeMesh();
 
-    cullingFrustrum = new CullingFrustrum(testCubeMaterial.camera);
+    // cubeMeshHandler = parseObjFile(await fetch('assets/meshes/sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
+    var geo = new BasicGeometry(gl, cubeMeshHandler);
+
+    var mat = new BasicEmissionMaterial(
+        gl,
+        await GetBasicEmissionShaderProgram(gl),
+        mainCamera
+    );
+    mat.color = color;
+
+    var transform = mat4.identity(mat4.create());
+    mat.mvMatrix = mat4.scale(mat4.translate(transform, position), [0.5, 2.0, 0.5]);
+    mat.camera = mainCamera;
+
+    return new Mesh(geo, mat);
+}
+
+async function initMeshes() {
+
+    mainCamera = new Camera(0.01, 140, 45, gl.viewportWidth / gl.viewportHeight);
+
+    await createBatchMesh();
+
+    regenMaze(10, 10, 0.7);
+    maze.print();
+
+    cullingFrustrum = new CullingFrustrum(mainCamera);
+
+    var startPos = addVector(multVector(maze.startPosition, 4.0), [2.0, 0.0, 2.0]);
+    startPos[1] = 1.0;
+    var endPos = addVector(multVector(maze.endPosition, 4.0), [2.0, 0.0, 2.0]);
+    endPos[1] = 1.0;
+
+    startMarkerMesh = await createMarkerMesh(startPos, [1.0, 0.3, 0.3, 1.0]);
+    endMarkerMesh = await createMarkerMesh(endPos, [0.3, 0.3, 1.0, 1.0]);
 }
 
 function initTextures() {
-    testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
-    testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
-    testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
-    testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
+    batchMesh.material.baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
+    batchMesh.material.normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
+    batchMesh.material.ambientOcclusionTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    batchMesh.material.roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
 
     // testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
     // testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
@@ -223,27 +249,27 @@ const speed = 0.002;
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
-    // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
-    // testCubeMaterial.camera.setPosition([0.0, 0.0, zPos]);
 
-    testCubeMaterial.directionalLight = [Math.cos(lightTheta), -6.0, Math.sin(lightTheta)];
+    batchMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
 
-    testCubeMaterial.camera.setRotation([xRot, yRot, 0.0]);
+    mainCamera.setRotation([xRot, yRot, 0.0]);
 
     var f = (keys['w'] ? 1.0 : 0.0) + (keys['s'] ? -1.0 : 0.0);
     var r = (keys['d'] ? 1.0 : 0.0) + (keys['a'] ? -1.0 : 0.0);
-    cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.forward, f * 0.2));
-    cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.right, r * 0.2));
+    cameraPosition = addVector(cameraPosition, multVector(mainCamera.forward, f * 0.2));
+    cameraPosition = addVector(cameraPosition, multVector(mainCamera.right, r * 0.2));
 
-    testCubeMaterial.camera.setPosition(cameraPosition);
+    mainCamera.setPosition(cameraPosition);
 
     batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
         return cullingFrustrum.testBoundingSphere(x.position, Math.sqrt(3.0));
     });
 
-    setCameraPositionUI(testCubeMaterial.camera.position);
+    setCameraPositionUI(mainCamera.position);
     batchMesh.draw(gl);
+
+    startMarkerMesh.draw(gl);
+    endMarkerMesh.draw(gl);
 }
 
 
@@ -257,7 +283,7 @@ function animate() {
         setRefreshRate(elapsedMs);
 
         var elapsedS = elapsedMs / 1000.0;
-        lightTheta += 1.3 * elapsedS;
+        lightTheta += 0.8 * elapsedS;
 
         // here we could change variables to adjust rotations for animation
         // yRot += elapsed * 0.05;
@@ -270,7 +296,7 @@ function animate() {
 
 
 function Frames() {
-    refitCanvas(gl, testCubeMaterial.camera);
+    refitCanvas(gl, mainCamera);
     requestAnimFrame(Frames);
     drawScene();
     animate();
@@ -308,6 +334,8 @@ function onMouseMove(event) {
         } else { // If not, rotate
             yRot -= (event.layerX - lastX) * 0.7;
             xRot -= (event.layerY - lastY) * 0.7;
+
+            xRot = Math.max(-85.0, Math.min(85.0, xRot));
         }
 
         lastX = event.layerX;

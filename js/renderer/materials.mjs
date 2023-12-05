@@ -48,12 +48,209 @@ export async function getShaderProgram(gl, vertSrc, fragSrc) {
     return shaderProgram;
 }
 
+class ShaderProgram {
+
+    /** @type {WebGLProgram} */
+    program;
+
+    constructor(gl, program) {
+        this.program = program;
+
+        this.useProgram(gl);
+
+        this.positionAttribute = gl.getAttribLocation(this.program, "aVertexPosition");
+        if (this.positionAttribute == -1) {
+            console.error("Can't find position attr");
+        }
+        gl.enableVertexAttribArray(this.positionAttribute);
+
+        this.textureCoordAttribute = gl.getAttribLocation(this.program, "aTextureCoord");
+        if (this.textureCoordAttribute != -1) {
+            gl.enableVertexAttribArray(this.textureCoordAttribute);
+        }
+
+        this.normalAttribute = gl.getAttribLocation(this.program, "aVertexNormal");
+        if (this.normalAttribute != -1) {
+            gl.enableVertexAttribArray(this.normalAttribute);
+        }
+    }
+
+    /**
+     * Use the program
+     * 
+     * @param {WebGLRenderingContext} gl WebGL Context
+     */
+    useProgram(gl) {
+        gl.useProgram(this.program);
+    }
+
+    /**
+     * Loads uniforms into shader program
+     * 
+     * @param {WebGLRenderingContext} gl WebGL Context
+     * @param {Object} unis Object containing all uniform data
+     * 
+     * @abstract
+     */
+    loadUniforms(gl, unis) {
+        console.error("Must be overriden");
+    }
+
+    /**
+     * Binds buffers and their corresponding pointers
+     * 
+     * @param {WebGLRenderbuffer} gl Rendering Context
+     * @param {WebGLBuffer} positionBuffer
+     * @param {WebGLBuffer} normalBuffer
+     * @param {WebGLBuffer} textureCoordBuffer
+     * @param {WebGLBuffer} indexBuffer
+     */
+    bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.vertexAttribPointer(this.positionAttribute, 3, gl.FLOAT, false, 0, 0);
+
+        if (this.normalAttribute != -1) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+            gl.vertexAttribPointer(this.normalAttribute, 3, gl.FLOAT, false, 0, 0);
+        }
+
+        if (this.textureCoordAttribute != -1) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            gl.vertexAttribPointer(this.textureCoordAttribute, 2, gl.FLOAT, false, 0, 0);
+        }
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    }
+}
+
+class FullTextureShaderProgram extends ShaderProgram {
+    constructor(gl, program) {
+        super(gl, program);
+
+        this.pMatrixUniform = gl.getUniformLocation(this.program, "uPMatrix");
+        this.vMatrixUniform = gl.getUniformLocation(this.program, "uVMatrix");
+        this.mvMatrixUniform = gl.getUniformLocation(this.program, "uMVMatrix");
+        this.baseTextureUniform = gl.getUniformLocation(this.program, "uSampler");
+        this.normalTextureUniform = gl.getUniformLocation(this.program, "uNormal");
+        this.ambientOcclusionTextureUniform = gl.getUniformLocation(this.program, "uAmbientMap");
+        this.roughnessTextureUniform = gl.getUniformLocation(this.program, "uRoughness");
+
+        this.dirLightUniform = gl.getUniformLocation(this.program, "uDirLight");
+        this.textureScaleUniform = gl.getUniformLocation(this.program, "uTextureScale");
+        this.specularIntensityUniform = gl.getUniformLocation(this.program, "uSpecularIntensity");
+        this.diffuseIntensityUniform = gl.getUniformLocation(this.program, "uDiffuseIntensity");
+        this.ambientLightColorUniform = gl.getUniformLocation(this.program, "uAmbientLightColor");
+
+        this.fogRadiusUniform = gl.getUniformLocation(this.program, "uFogRadius");
+        this.fogFalloffUniform = gl.getUniformLocation(this.program, "uFogFalloff");
+    }
+
+    /**
+     * Loads uniforms into shader program
+     * 
+     * @param {WebGLRenderingContext} gl WebGL Context
+     * @param {Object} unis Object containing all uniform data
+     */
+    loadUniforms(gl, unis) {
+
+        this.useProgram(gl);
+
+        // Lighting
+        gl.uniform1f(this.specularIntensityUniform, unis.specularIntensity);
+        gl.uniform1f(this.diffuseIntensityUniform, unis.diffuseIntensity);
+        gl.uniform3fv(this.ambientLightColorUniform, unis.ambientLightColor);
+        gl.uniform3fv(this.dirLightUniform, normalizeVector(unis.directionalLight));
+
+        gl.uniform1f(this.fogRadiusUniform, Math.max(0.0, Math.min(unis.camera.farZ - unis.camera.nearZ, unis.fogRadius)));
+        gl.uniform1f(this.fogFalloffUniform, Math.max(0.0, Math.min(1.0, unis.fogFalloff)));
+
+        // Transformations
+        gl.uniformMatrix4fv(this.pMatrixUniform, false, unis.camera.getProjection());
+        gl.uniformMatrix4fv(this.mvMatrixUniform, false, unis.mvMatrix);
+        gl.uniformMatrix4fv(this.vMatrixUniform, false, unis.camera.getTransformation());
+
+        // Textures
+        gl.uniform2fv(this.textureScaleUniform, unis.textureScale);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, unis.baseTexture);
+        gl.uniform1i(this.baseTextureUniform, 0);
+        
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, unis.normalTexture);
+        gl.uniform1i(this.normalTextureUniform, 1);
+
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, unis.ambientOcclusionTexture);
+        gl.uniform1i(this.ambientOcclusionTextureUniform, 2);
+
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, unis.roughnessTexture);
+        gl.uniform1i(this.roughnessTextureUniform, 3);
+    }
+}
+
+class BasicEmissionShaderProgram extends ShaderProgram {
+    constructor(gl, program) {
+        super(gl, program);
+
+        this.pMatrixUniform = gl.getUniformLocation(this.program, "uPMatrix");
+        this.vMatrixUniform = gl.getUniformLocation(this.program, "uVMatrix");
+        this.mvMatrixUniform = gl.getUniformLocation(this.program, "uMVMatrix");
+        this.colorUniform = gl.getUniformLocation(this.program, "uColor");
+    }
+
+    /**
+     * Loads uniforms into shader program
+     * 
+     * @param {WebGLRenderingContext} gl WebGL Context
+     * @param {Object} unis Object containing all uniform data
+     */
+    loadUniforms(gl, unis) {
+        this.useProgram(gl);
+
+        gl.uniformMatrix4fv(this.pMatrixUniform, false, unis.camera.getProjection());
+        gl.uniformMatrix4fv(this.mvMatrixUniform, false, unis.mvMatrix);
+        gl.uniformMatrix4fv(this.vMatrixUniform, false, unis.camera.getTransformation());
+        gl.uniform4fv(this.colorUniform, unis.color);
+    }
+}
+
+/** @type {FullTextureShaderProgram} */
+var fullTextProgram = null;
+export async function GetFullTextureShaderProgram(gl) {
+    if (fullTextProgram === null) {
+        fullTextProgram = new FullTextureShaderProgram(
+            gl,
+            await getShaderProgram(gl, "./shaders/test-cube-vs.glsl", "./shaders/test-cube-fs.glsl")
+        );
+    }
+
+    return fullTextProgram;
+}
+
+/** @type {BasicEmissionShaderProgram} */
+var basicEmisProgram = null;
+export async function GetBasicEmissionShaderProgram(gl) {
+    if (basicEmisProgram === null) {
+        basicEmisProgram = new BasicEmissionShaderProgram(
+            gl,
+            await getShaderProgram(gl, "./shaders/basic-emission-vs.glsl", "./shaders/basic-emission-fs.glsl")
+        );
+    }
+
+    return basicEmisProgram;
+}
+
 export class Material {
+
+    /** @type {ShaderProgram} */
+    shaderProgram;
     
     /**
      * Constructs a new material with a given shader program.
      * 
-     * @param {WebGLProgram} shaderProgram 
+     * @param {ShaderProgram} shaderProgram 
      */
     constructor(shaderProgram) {
         this.shaderProgram = shaderProgram;
@@ -65,7 +262,7 @@ export class Material {
      * @param {WebGLRenderingContext} gl 
      */
     useShaderProgram(gl) {
-        gl.useProgram(this.shaderProgram);
+        this.shaderProgram.useProgram(gl);
     }
 
     /**
@@ -84,11 +281,11 @@ export class Material {
      * @param {WebGLBuffer?} positionBuffer
      * @param {WebGLBuffer?} normalBuffer
      * @param {WebGLBuffer?} textureCoordBuffer
-     * @param {WebGLBuffer?} indexBuffer  
-     * 
-     * @abstract
+     * @param {WebGLBuffer?} indexBuffer
      */
-    bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer) { console.error("Must be overriden"); }
+    bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer) {
+        this.shaderProgram.bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer);
+    }
 }
 
 export class TestCubeMaterial extends Material {
@@ -111,46 +308,9 @@ export class TestCubeMaterial extends Material {
     ambientOcclusionTexture;
     roughnessTexture;
 
-    constructor(gl, shaderProgram) {
+    constructor(gl, shaderProgram, camera) {
 
         super(shaderProgram);
-
-        this.useShaderProgram(gl);
-
-        this.pMatrixUniform = gl.getUniformLocation(this.shaderProgram, "uPMatrix");
-        this.vMatrixUniform = gl.getUniformLocation(this.shaderProgram, "uVMatrix");
-        this.mvMatrixUniform = gl.getUniformLocation(this.shaderProgram, "uMVMatrix");
-        this.baseTextureUniform = gl.getUniformLocation(this.shaderProgram, "uSampler");
-        this.normalTextureUniform = gl.getUniformLocation(this.shaderProgram, "uNormal");
-        this.ambientOcclusionTextureUniform = gl.getUniformLocation(this.shaderProgram, "uAmbientMap");
-        this.roughnessTextureUniform = gl.getUniformLocation(this.shaderProgram, "uRoughness");
-
-        this.dirLightUniform = gl.getUniformLocation(this.shaderProgram, "uDirLight");
-        this.textureScaleUniform = gl.getUniformLocation(this.shaderProgram, "uTextureScale");
-        this.specularIntensityUniform = gl.getUniformLocation(this.shaderProgram, "uSpecularIntensity");
-        this.diffuseIntensityUniform = gl.getUniformLocation(this.shaderProgram, "uDiffuseIntensity");
-        this.ambientLightColorUniform = gl.getUniformLocation(this.shaderProgram, "uAmbientLightColor");
-
-        this.fogRadiusUniform = gl.getUniformLocation(this.shaderProgram, "uFogRadius");
-        this.fogFalloffUniform = gl.getUniformLocation(this.shaderProgram, "uFogFalloff");
-
-        this.positionAttribute = gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
-        if (this.positionAttribute == -1) {
-            console.error("Can't find position attr");
-        }
-        gl.enableVertexAttribArray(this.positionAttribute);
-
-        this.textureCoordAttribute = gl.getAttribLocation(this.shaderProgram, "aTextureCoord");
-        if (this.textureCoordAttribute == -1) {
-            console.error("Can't find texCoord attr");
-        }
-        gl.enableVertexAttribArray(this.textureCoordAttribute);
-
-        this.normalAttribute = gl.getAttribLocation(this.shaderProgram, "aVertexNormal");
-        if (this.normalAttribute == -1) {
-            console.error("Can't find normal attr");
-        }
-        gl.enableVertexAttribArray(this.normalAttribute);
 
         this.baseTexture = null;
         this.normalTexture = null;
@@ -166,66 +326,42 @@ export class TestCubeMaterial extends Material {
         this.fogRadius = 0.0;
         this.fogFalloff = 0.7;
         
-        this.camera = new Camera(0.1, 10, 45, 16.0 / 9.0);
+        this.camera = camera;
         this.mvMatrix = mat4.identity(mat4.create());
     }
 
     loadUniforms(gl) {
-        // Lighting
-        gl.uniform1f(this.specularIntensityUniform, this.specularIntensity);
-        gl.uniform1f(this.diffuseIntensityUniform, this.diffuseIntensity);
-        gl.uniform3fv(this.ambientLightColorUniform, this.ambientLightColor);
-        gl.uniform3fv(this.dirLightUniform, normalizeVector(this.directionalLight));
-
-        gl.uniform1f(this.fogRadiusUniform, Math.max(0.0, Math.min(this.camera.farZ - this.camera.nearZ, this.fogRadius)));
-        gl.uniform1f(this.fogFalloffUniform, Math.max(0.0, Math.min(1.0, this.fogFalloff)));
-
-        // Transformations
-        gl.uniformMatrix4fv(this.pMatrixUniform, false, this.camera.getProjection());
-        gl.uniformMatrix4fv(this.mvMatrixUniform, false, this.mvMatrix);
-        gl.uniformMatrix4fv(this.vMatrixUniform, false, this.camera.getTransformation());
-
-        // Textures
-        gl.uniform2fv(this.textureScaleUniform, this.textureScale);
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.baseTexture);
-        gl.uniform1i(this.baseTextureUniform, 0);
-        
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.normalTexture);
-        gl.uniform1i(this.normalTextureUniform, 1);
-
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, this.ambientOcclusionTexture);
-        gl.uniform1i(this.ambientOcclusionTextureUniform, 2);
-
-        gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, this.roughnessTexture);
-        gl.uniform1i(this.roughnessTextureUniform, 3);
+        this.shaderProgram.loadUniforms(gl, this);
     }
+}
+
+export class BasicEmissionMaterial extends Material {
+
+    /** @type {Array<Number>} */
+    color;
+    /** @type {Array<Number>} */
+    mvMatrix;
+    /** @type {Camera} */
+    camera;
 
     /**
-     * Binds buffers and their corresponding pointers
+     * Constructs a new material with a given shader program.
      * 
-     * @param {WebGLRenderbuffer} gl Rendering Context
-     * @param {WebGLBuffer} positionBuffer
-     * @param {WebGLBuffer} normalBuffer
-     * @param {WebGLBuffer} textureCoordBuffer
-     * @param {WebGLBuffer} indexBuffer
-     * 
-     * @abstract
+     * @param {WebGLRenderingContext} gl WebGL Context
+     * @param {ShaderProgram} shaderProgram Shader Program
+     * @param {Camera} camera Main Camera
      */
-    bindVertexPointers(gl, positionBuffer, normalBuffer, textureCoordBuffer, indexBuffer) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.vertexAttribPointer(this.positionAttribute, 3, gl.FLOAT, false, 0, 0);
+    constructor(gl, shaderProgram, camera) {
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-        gl.vertexAttribPointer(this.normalAttribute, 3, gl.FLOAT, false, 0, 0);
+        super(shaderProgram);
+        
+        this.color = [1.0, 1.0, 1.0, 1.0];
+        
+        this.camera = camera;
+        this.mvMatrix = mat4.identity(mat4.create());
+    }
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-        gl.vertexAttribPointer(this.textureCoordAttribute, 2, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    loadUniforms(gl) {
+        this.shaderProgram.loadUniforms(gl, this);
     }
 }
