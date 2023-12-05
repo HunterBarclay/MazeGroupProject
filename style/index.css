@@ -1,0 +1,31 @@
+@import url(https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap);
+
+#canvas-container {
+    position: absolute;
+    top: 0pt;
+    bottom: 0pt;
+    left: 0pt;
+    right: 0pt;
+    width: 100vw;
+    height: 100vh;
+}
+
+p {
+    color: #72a5f7;
+    font-family: 'Montserrat', sans-serif;
+    margin: 1pt;
+    font-weight: 600;
+}
+
+#info {
+    display: flex;
+    flex-direction: column;
+    column-gap: 0pt;
+
+    position: fixed;
+    left: 10pt;
+    top: 10pt;
+
+    width: fit-content;
+    height: fit-content;
+}

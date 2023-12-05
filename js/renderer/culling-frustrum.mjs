@@ -3,9 +3,9 @@
  */
 
 import Camera from "../components/camera.mjs";
-import { generateMaze } from "../util/maze-gen.js";
+import { generateMaze } from "../util/maze-gen.mjs";
 
-class CullingFrustrum {
+export class CullingFrustrum {
 
     /**
      * 
@@ -15,6 +15,13 @@ class CullingFrustrum {
         this.camera = camera;
     }
 
+    /**
+     * Test if a bounding sphere in contained within the camera's frustrum.
+     * 
+     * @param {Array<Number>} center Vec3 defining center of bounding sphere.
+     * @param {Number} radius Radius of the bounding sphere.
+     * @returns {Boolean} Whether or not the sphere in contained in the camera's frustrum.
+     */
     testBoundingSphere(center, radius) {
         var planes = this.camera.getFrustrumPlanes();
         var res = true;
@@ -29,12 +36,16 @@ class CullingFrustrum {
 
 export function testCullingFrustrum() {
     var cam = new Camera(0.1, 5, 45, 16.0 / 9.0);
+    console.log(cam.forward.map(x => x.toFixed(2)));
     var maze = generateMaze(20, 20, 0.1);
-    maze.print();
-    cam.setRotation([0.0, 60.0, 0.0]);
-    // cam.setPosition([5.0, 0.0, 5.0]);
-    cam.setPosition(maze.startPosition);
+    // maze.print();
+    // cam.setRotation([0.0, 60.0, 0.0]);
+    cam.setPosition([0.0, 0.0, 0.0]);
+    // cam.setPosition(maze.startPosition);
     var cullFrus = new CullingFrustrum(cam);
+
+    cam.getFrustrumPlanes().forEach(x => x.printEquation());
+    console.log(cam.getFrustrumPlanes()[0].point);
 
     var layout = maze.getArrayLayout();
     

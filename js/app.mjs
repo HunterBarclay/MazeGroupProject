@@ -1,11 +1,5 @@
-import { testCamera } from "./components/camera.mjs";
-import { testCullingFrustrum } from "./renderer/culling-frustrum.mjs";
-import startHelloWebGL from "./renderer/renderer.js";
+import startHelloWebGL from "./renderer/renderer.mjs";
 
 window.addEventListener("load", (_) => {
-
-    // testCamera();
-    // testCullingFrustrum();
-
     startHelloWebGL();
 });
