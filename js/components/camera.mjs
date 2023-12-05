@@ -1,5 +1,5 @@
 import { addVector, crossProductVector, multVector, subtractVector } from "../renderer/mesh-handler.mjs";
-import { mat4 } from "../util/glMatrix_util.js";
+import { mat4 } from "../util/glMatrix_util.mjs";
 import Plane from "../util/plane.mjs";
 
 class Camera {
@@ -10,8 +10,8 @@ class Camera {
         this.nearZ = nearZ;
         this.farZ = farZ;
         this.fovY = fovY;
-        this.aspect = aspect;
 
+        this.setAspectRatio(aspect);
         this.setPosition([0.0, 0.0, 0.0]);
         this.setRotation([0.0, 0.0, 0.0]);
         this.clean();
@@ -21,8 +21,14 @@ class Camera {
         if (this.isDirty) {
             this.genTransformation();
             this.genFrustrumPlanes();
+            this.genProjection();
             this.isDirty = false;
         }
+    }
+
+    setAspectRatio(aspect) {
+        this.aspect = aspect;
+        this.isDirty = true;
     }
 
     setPosition(pos) {
@@ -34,21 +40,15 @@ class Camera {
         this.rotation = rot;
         var rotMat = mat4.create();
         rotMat = mat4.identity(rotMat);
-        mat4.rotate(rotMat, this.rotation[0] / 180.0 * 3.1415, [1, 0, 0]);
-        mat4.rotate(rotMat, this.rotation[1] / 180.0 * 3.1415, [0, 1, 0]);
-        mat4.rotate(rotMat, this.rotation[2] / 180.0 * 3.1415, [0, 0, 1]);
-        this.forward = mat4.multiplyVec3(rotMat, [0.0, 0.0, 1.0]);
-        this.right = mat4.multiplyVec3(rotMat, [-1.0, 0.0, 0.0]);
+        // WHY WHY WHAT IN THE WHY DOES THIS FUCKING WORK
+        // This SHOULD be z, x, then y, but for some reason it has to be done in reverse. HASFJDSHJFKDSA
+        mat4.rotateY(rotMat, this.rotation[1] / 180.0 * 3.1415);
+        mat4.rotateX(rotMat, this.rotation[0] / 180.0 * 3.1415);
+        mat4.rotateZ(rotMat, this.rotation[2] / 180.0 * 3.1415);
+        this.forward = mat4.multiplyVec3(rotMat, [0.0, 0.0, -1.0]);
+        this.right = mat4.multiplyVec3(rotMat, [1.0, 0.0, 0.0]);
         this.up = mat4.multiplyVec3(rotMat, [0.0, 1.0, 0.0]);
         this.isDirty = true;
-    }
-
-    genTransformation() {
-        mat4.identity(this.transformation);
-        mat4.rotate(this.transformation, this.rotation[0] / 180.0 * 3.1415, [1, 0, 0]);
-        mat4.rotate(this.transformation, this.rotation[1] / 180.0 * 3.1415, [0, 1, 0]);
-        mat4.rotate(this.transformation, this.rotation[2] / 180.0 * 3.1415, [0, 0, 1]);
-        mat4.translate(this.transformation, this.position);
     }
 
     getTransformation() {
@@ -57,7 +57,26 @@ class Camera {
     }
 
     getProjection() {
+        this.clean();
         return this.projection;
+    }
+
+    /**
+     * @returns {Array<Plane>} Planes of the frustrum:
+     * [ near, far, left, right, top, bottom ]
+     */
+    getFrustrumPlanes() {
+        this.clean();
+        return this.frustrumPlanes;
+    }
+
+    genTransformation() {
+        this.transformation = mat4.lookAt(this.position, addVector(this.position, this.forward), this.up);
+    }
+
+    genProjection() {
+        this.projection = mat4.perspective(this.fovY, this.aspect, this.nearZ, this.farZ);
+        // this.projection = mat4.inverse(this.projection);
     }
 
     genFrustrumPlanes() {
@@ -91,27 +110,18 @@ class Camera {
             new Plane( // Top
                 this.position,
                 crossProductVector(
-                    addVector(frontMultFar, multVector(this.up, halfVSide)),
-                    this.right
+                    this.right,
+                    addVector(frontMultFar, multVector(this.up, -halfVSide))
                 )
             ),
             new Plane( // Bottom
                 this.position,
                 crossProductVector(
-                    this.right,
-                    addVector(frontMultFar, multVector(this.up, -halfVSide)),
+                    addVector(frontMultFar, multVector(this.up, halfVSide)),
+                    this.right
                 )
             )
         ]
-    }
-
-    /**
-     * @returns {Array<Plane>} Planes of the frustrum:
-     * [ near, far, left, right, top, bottom ]
-     */
-    getFrustrumPlanes() {
-        this.clean();
-        return this.frustrumPlanes;
     }
 }
 
