@@ -228,14 +228,23 @@ function drawScene() {
 
     testCubeMaterial.camera.setRotation([xRot, yRot, 0.0]);
 
-    console.log(testCubeMaterial.camera.up.map(x => x.toFixed(2)));
-
     var f = (keys['w'] ? 1.0 : 0.0) + (keys['s'] ? -1.0 : 0.0);
     var r = (keys['a'] ? 1.0 : 0.0) + (keys['d'] ? -1.0 : 0.0);
     cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.forward, f * 0.2));
     cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.right, r * 0.2));
 
     testCubeMaterial.camera.setPosition(cameraPosition);
+
+    batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
+        const mat = mat4.create(testCubeMaterial.mvMatrix);
+        const pos = new Float32Array(3);
+        pos[0] = x.position[0];
+        pos[1] = x.position[1];
+        pos[2] = x.position[2];
+        const matRes = mat4.create();
+        const instancePos = mat4.multiplyVec3(mat, pos, matRes);
+        return cullingFrustrum.testBoundingSphere(instancePos, Math.sqrt(3));
+    });
 
     setCameraPositionUI(testCubeMaterial.camera.position);
     batchMesh.draw(gl);
