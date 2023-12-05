@@ -36,14 +36,16 @@ export class CullingFrustrum {
 
 export function testCullingFrustrum() {
     var cam = new Camera(0.1, 5, 45, 16.0 / 9.0);
+    console.log(cam.forward.map(x => x.toFixed(2)));
     var maze = generateMaze(20, 20, 0.1);
-    maze.print();
+    // maze.print();
     // cam.setRotation([0.0, 60.0, 0.0]);
-    cam.setPosition([5.0, 0.0, 5.0]);
+    cam.setPosition([0.0, 0.0, 0.0]);
     // cam.setPosition(maze.startPosition);
     var cullFrus = new CullingFrustrum(cam);
 
     cam.getFrustrumPlanes().forEach(x => x.printEquation());
+    console.log(cam.getFrustrumPlanes()[0].point);
 
     var layout = maze.getArrayLayout();
     

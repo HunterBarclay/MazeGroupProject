@@ -46,7 +46,7 @@ class Camera {
         mat4.rotateX(rotMat, this.rotation[0] / 180.0 * 3.1415);
         mat4.rotateZ(rotMat, this.rotation[2] / 180.0 * 3.1415);
         this.forward = mat4.multiplyVec3(rotMat, [0.0, 0.0, -1.0]);
-        this.right = mat4.multiplyVec3(rotMat, [-1.0, 0.0, 0.0]);
+        this.right = mat4.multiplyVec3(rotMat, [1.0, 0.0, 0.0]);
         this.up = mat4.multiplyVec3(rotMat, [0.0, 1.0, 0.0]);
         this.isDirty = true;
     }
@@ -110,15 +110,15 @@ class Camera {
             new Plane( // Top
                 this.position,
                 crossProductVector(
-                    addVector(frontMultFar, multVector(this.up, halfVSide)),
-                    this.right
+                    this.right,
+                    addVector(frontMultFar, multVector(this.up, -halfVSide))
                 )
             ),
             new Plane( // Bottom
                 this.position,
                 crossProductVector(
-                    this.right,
-                    addVector(frontMultFar, multVector(this.up, -halfVSide)),
+                    addVector(frontMultFar, multVector(this.up, halfVSide)),
+                    this.right
                 )
             )
         ]

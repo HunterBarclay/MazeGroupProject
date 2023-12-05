@@ -56,7 +56,6 @@ var cubeVertexTextureCoordBuffer;
 var cubeVertexIndexBuffer;
 var cubeVertexNormalBuffer;
 
-var objMeshHandler;
 var cubeBatchInstance;
 
 /** @type {BatchGeometry} */
@@ -82,10 +81,12 @@ var cullingFrustrum;
 
 //cubeBatchInstance needs to be initialized
 async function initMeshes() {
-    const numBatchInstances = 15;
+    const numBatchInstances = 4; // If not specified, will calculate
 
     cubeMeshHandler = generateCubeMesh();
-    batchGeo = new BatchGeometry(gl, cubeMeshHandler, numBatchInstances);
+    console.log(cubeMeshHandler.getByteSize());
+    // cubeMeshHandler = parseObjFile(await fetch('assets/meshes/sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
+    batchGeo = new BatchGeometry(gl, cubeMeshHandler /*, numBatchInstances */);
 
     testCubeMaterial = new TestCubeMaterial(
         gl,
@@ -94,7 +95,8 @@ async function initMeshes() {
 
     testCubeMaterial.camera = new Camera(0.01, 70, 45, gl.viewportWidth / gl.viewportHeight);
     testCubeMaterial.textureScale = [1.0, 1.0];
-    testCubeMaterial.specularIntensity = 0.05;
+    testCubeMaterial.specularIntensity = 0.1;
+    testCubeMaterial.ambientLightColor = [0.2, 0.4, 0.6];
 
     testCubeMaterial.mvMatrix = mat4.identity(mat4.create());
 
@@ -118,18 +120,20 @@ async function initMeshes() {
     batchGeo.batchInstances = mazeWalls;
 
     cullingFrustrum = new CullingFrustrum(testCubeMaterial.camera);
+
+    maze.print();
 }
 
 function initTextures() {
-    // testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
-    // testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
-    // testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
-    // testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
+    testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_basecolor.jpg");
+    testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
+    testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
 
-    testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
-    testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
-    testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
-    testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
+    // testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Base_Color.jpg");
+    // testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Normal.jpg");
+    // testCubeMaterial.ambientOcclusionTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_ambientOcclusion.jpg");
+    // testCubeMaterial.roughnessTexture = loadTexture("./assets/textures/style-brick/Terracotta_Tiles_002_Roughness.jpg");
 
     // testCubeMaterial.baseTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_basecolor.jpg");
     // testCubeMaterial.normalTexture = loadTexture("./assets/textures/style-brick2/Stylized_Bricks_002_normal.jpg");
@@ -180,8 +184,6 @@ async function startHelloWebGL() {
     var gl = initGLScene();
     // Drawing ints not shorts. CREDIT: https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
     var uints_for_indices = gl.getExtension("OES_element_index_uint");
-
-    objMeshHandler = parseObjFile(await fetch('assets/meshes/sphere.obj', {cache: "no-store"}).then(obj => obj.text()));
     // objMeshHandler = generateCubeMesh();
 
     await initMeshes();
@@ -208,12 +210,12 @@ async function startHelloWebGL() {
 // then we define our View positions for our camera using WebGL matrices.
 // OpenGL has convenience methods for this such as glPerspective().
 // finally we call the gl draw methods to draw our defined geometry objects.
-var xRot = 0;
-var yRot = 0;
+var xRot = -20.0;
+var yRot = 225.0;
 var zRot = 0;
 var zPos = -5.0;
 var lightTheta = 0.0;
-var cameraPosition = [0.0, 3.0, 0.0];
+var cameraPosition = [0.0, 4.0, 0.0];
 
 const speed = 0.002;
 
@@ -229,21 +231,14 @@ function drawScene() {
     testCubeMaterial.camera.setRotation([xRot, yRot, 0.0]);
 
     var f = (keys['w'] ? 1.0 : 0.0) + (keys['s'] ? -1.0 : 0.0);
-    var r = (keys['a'] ? 1.0 : 0.0) + (keys['d'] ? -1.0 : 0.0);
+    var r = (keys['d'] ? 1.0 : 0.0) + (keys['a'] ? -1.0 : 0.0);
     cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.forward, f * 0.2));
     cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.right, r * 0.2));
 
     testCubeMaterial.camera.setPosition(cameraPosition);
 
     batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
-        const mat = mat4.create(testCubeMaterial.mvMatrix);
-        const pos = new Float32Array(3);
-        pos[0] = x.position[0];
-        pos[1] = x.position[1];
-        pos[2] = x.position[2];
-        const matRes = mat4.create();
-        const instancePos = mat4.multiplyVec3(mat, pos, matRes);
-        return cullingFrustrum.testBoundingSphere(instancePos, Math.sqrt(3));
+        return cullingFrustrum.testBoundingSphere(x.position, Math.sqrt(3.0));
     });
 
     setCameraPositionUI(testCubeMaterial.camera.position);

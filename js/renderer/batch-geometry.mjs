@@ -3,6 +3,9 @@ import { Geometry } from "./geometry.mjs";
 import MeshHandler from "./mesh-handler.mjs";
 import { setBatchesDrawn, setMeshesDrawn } from "./renderer.mjs";
 
+// 200KB
+const TARGET_SIZE_FOR_BATCH_BUFFERS = 200000;
+
 /**
  * Class for managing Buffers
  */
@@ -20,9 +23,12 @@ class BatchGeometry extends Geometry {
      * @param {MeshHandler} meshHandler Mesh handler for data of each batch instance
      * @param {Number} batchSize Maximum number of batch instances that be can loaded in a single draw call
      */
-    constructor(gl, meshHandler, batchSize) {
+    constructor(gl, meshHandler, batchSize = 0) {
         super(gl);
 
+        if (batchSize === 0) {
+            batchSize = Math.max(1, Math.floor(TARGET_SIZE_FOR_BATCH_BUFFERS / meshHandler.getByteSize()));
+        }
         this.batchSize = batchSize;
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
@@ -89,6 +95,8 @@ class BatchGeometry extends Geometry {
     draw(gl) {
 
         if (this.batchInstances.length === 0) {
+            setBatchesDrawn(0);
+            setMeshesDrawn(0);
             return;
         }
 
