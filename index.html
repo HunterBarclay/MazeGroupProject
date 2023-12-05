@@ -13,8 +13,6 @@
     <title>Maze</title>
     <meta name="generator" content="BBEdit 10.5" />
 
-    <link rel="stylesheet" href="style/index.css" />
-
     <!-- define our shaders -->
     <script id="shader-fs" type="x-shader/x-fragment" src="/shaders/test_fs.glsl"></script>
     <script id="shader-vs" type="x-shader/x-vertex" src="/shaders/test_vs.glsl"></script>
@@ -22,7 +20,7 @@
     <!-- main module with runtime -->
     <script type="module" src="js/app.mjs"></script>
 
-    <script></script>
+    <script> <!-- TODO --> </script>
 
 </head>
 
@@ -30,20 +28,16 @@
 <!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
 
 <body>
+    <h1>Hello WebGL Simple Example</h1>
+
     <!-- embed the HTML5 Canvas Drawing object on the page.-->
     <!-- Name the canvas 'hellowebgl' for the javascript code. -->
-    <div id="canvas-container">
-        <canvas id="hellowebgl">
-            If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
-        </canvas>
-    </div>
+    <canvas id="hellowebgl" width=640 height=480>
+        If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
+    </canvas>
 
-    <div id="info">
-        <p id="campos">(-.--, -.--, -.--)</p>
-        <p id="framerate">- ms (- fps)</p>
-        <p id="batches">- batches</p>
-        <p id="meshes">- meshes</p>
-    </div>
+    <h3>Click and Hold Left-Click and look from left to right. WASD to move</h3>
+    <p id="cam-position">...</p>
 
 </body>
 

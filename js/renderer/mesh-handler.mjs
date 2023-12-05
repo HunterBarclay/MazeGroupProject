@@ -15,14 +15,6 @@ class MeshHandler {
         this.texCoordArray = typeof texCoordArray == Float32Array ? texCoordArray : new Float32Array(texCoordArray);
     }
 
-    /**
-     * Get the total byte size of the entire mesh
-     * 
-     * @returns {Number} Number of bytes
-     */
-    getByteSize() {
-        return this.vertexArray.byteLength + this.normalArray.byteLength + this.texCoordArray.byteLength + this.indexArray.byteLength;
-    }
     
 }
 
@@ -275,10 +267,10 @@ export function generateCubeMesh() {
         0.0, 0.0,
 
         // Top face
-        1.0, 0.0,
-        1.0, 1.0,
         0.0, 1.0,
         0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
 
         // Bottom face
         1.0, 1.0,
