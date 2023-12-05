@@ -40,10 +40,12 @@ class Camera {
         this.rotation = rot;
         var rotMat = mat4.create();
         rotMat = mat4.identity(rotMat);
-        mat4.rotate(rotMat, this.rotation[0] / 180.0 * 3.1415, [1, 0, 0]);
-        mat4.rotate(rotMat, this.rotation[1] / 180.0 * 3.1415, [0, 1, 0]);
-        mat4.rotate(rotMat, this.rotation[2] / 180.0 * 3.1415, [0, 0, 1]);
-        this.forward = mat4.multiplyVec3(rotMat, [0.0, 0.0, 1.0]);
+        // WHY WHY WHAT IN THE WHY DOES THIS FUCKING WORK
+        // This SHOULD be z, x, then y, but for some reason it has to be done in reverse. HASFJDSHJFKDSA
+        mat4.rotateY(rotMat, this.rotation[1] / 180.0 * 3.1415);
+        mat4.rotateX(rotMat, this.rotation[0] / 180.0 * 3.1415);
+        mat4.rotateZ(rotMat, this.rotation[2] / 180.0 * 3.1415);
+        this.forward = mat4.multiplyVec3(rotMat, [0.0, 0.0, -1.0]);
         this.right = mat4.multiplyVec3(rotMat, [-1.0, 0.0, 0.0]);
         this.up = mat4.multiplyVec3(rotMat, [0.0, 1.0, 0.0]);
         this.isDirty = true;
@@ -69,15 +71,12 @@ class Camera {
     }
 
     genTransformation() {
-        mat4.identity(this.transformation);
-        mat4.rotate(this.transformation, this.rotation[0] / 180.0 * 3.1415, [1, 0, 0]);
-        mat4.rotate(this.transformation, this.rotation[1] / 180.0 * 3.1415, [0, 1, 0]);
-        mat4.rotate(this.transformation, this.rotation[2] / 180.0 * 3.1415, [0, 0, 1]);
-        mat4.translate(this.transformation, this.position);
+        this.transformation = mat4.lookAt(this.position, addVector(this.position, this.forward), this.up);
     }
 
     genProjection() {
         this.projection = mat4.perspective(this.fovY, this.aspect, this.nearZ, this.farZ);
+        // this.projection = mat4.inverse(this.projection);
     }
 
     genFrustrumPlanes() {

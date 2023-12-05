@@ -1,7 +1,7 @@
 import { mat4 } from "../util/glMatrix_util.mjs";
 import { requestAnimFrame } from "../util/webgl-utils.mjs";
 import BatchInstance from "./batch-instance.mjs";
-import MeshHandler, { generateCubeMesh, addVector, normalizeVector } from "./mesh-handler.mjs";
+import MeshHandler, { generateCubeMesh, addVector, normalizeVector, multVector } from "./mesh-handler.mjs";
 import Camera from "../components/camera.mjs";
 import { parseObjFile } from "../util/obj-parser.mjs";
 import refitCanvas from "../util/refit-canvas.mjs";
@@ -95,6 +95,8 @@ async function initMeshes() {
     testCubeMaterial.camera = new Camera(0.01, 70, 45, gl.viewportWidth / gl.viewportHeight);
     testCubeMaterial.textureScale = [1.0, 1.0];
     testCubeMaterial.specularIntensity = 0.05;
+
+    testCubeMaterial.mvMatrix = mat4.identity(mat4.create());
 
     batchMesh = new Mesh(batchGeo, testCubeMaterial);
 
@@ -210,6 +212,8 @@ var xRot = 0;
 var yRot = 0;
 var zRot = 0;
 var zPos = -5.0;
+var lightTheta = 0.0;
+var cameraPosition = [0.0, 3.0, 0.0];
 
 const speed = 0.002;
 
@@ -218,39 +222,22 @@ function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
-    testCubeMaterial.camera.setPosition([0.0, 0.0, zPos]);
+    // testCubeMaterial.camera.setPosition([0.0, 0.0, zPos]);
 
-    var mvMatrix = mat4.create();
-    mat4.identity(mvMatrix);
-    mat4.rotate(mvMatrix, xRot / 180.0 * 3.1415, [1, 0, 0]);
-    mat4.rotate(mvMatrix, yRot / 180.0 * 3.1415, [0, 1, 0]);
-    mat4.rotate(mvMatrix, zRot / 180.0 * 3.1415, [0, 0, 1]);
+    testCubeMaterial.directionalLight = [Math.cos(lightTheta), -1.0, Math.sin(lightTheta)];
 
-    testCubeMaterial.mvMatrix = mvMatrix;
+    testCubeMaterial.camera.setRotation([xRot, yRot, 0.0]);
 
-    batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
-        const mat = mat4.create(testCubeMaterial.mvMatrix);
-        const pos = new Float32Array(3);
-        pos[0] = x.position[0];
-        pos[1] = x.position[1];
-        pos[2] = x.position[2];
-        const matRes = mat4.create();
-        const instancePos = mat4.multiplyVec3(mat, pos, matRes);
-        return cullingFrustrum.testBoundingSphere(instancePos, Math.sqrt(3));
-    });
+    console.log(testCubeMaterial.camera.up.map(x => x.toFixed(2)));
 
-    // TODO: Update to have batches
-    // testCubeMaterial.loadUniforms(gl);
-    // testCubeMaterial.bindVertexPointers(
-    //     gl,
-    //     cubeVertexPositionBuffer,
-    //     cubeVertexNormalBuffer,
-    //     cubeVertexTextureCoordBuffer,
-    //     cubeVertexIndexBuffer
-    // );
+    var f = (keys['w'] ? 1.0 : 0.0) + (keys['s'] ? -1.0 : 0.0);
+    var r = (keys['a'] ? 1.0 : 0.0) + (keys['d'] ? -1.0 : 0.0);
+    cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.forward, f * 0.2));
+    cameraPosition = addVector(cameraPosition, multVector(testCubeMaterial.camera.right, r * 0.2));
 
-    // gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
+    testCubeMaterial.camera.setPosition(cameraPosition);
 
+    setCameraPositionUI(testCubeMaterial.camera.position);
     batchMesh.draw(gl);
 }
 
@@ -260,9 +247,12 @@ var lastTime = 0;
 function animate() {
     var timeNow = Date.now();
     if (lastTime != 0) {
-        var elapsed = timeNow - lastTime;
+        var elapsedMs = timeNow - lastTime;
 
-        setRefreshRate(elapsed);
+        setRefreshRate(elapsedMs);
+
+        var elapsedS = elapsedMs / 1000.0;
+        lightTheta += 1.3 * elapsedS;
 
         // here we could change variables to adjust rotations for animation
         // yRot += elapsed * 0.05;
@@ -311,8 +301,8 @@ function onMouseMove(event) {
             zPos = Math.max(Math.min(zPos, 0), -40);
             // 
         } else { // If not, rotate
-            yRot += (event.layerX - lastX) * 0.7;
-            xRot += (event.layerY - lastY) * 0.7;
+            yRot -= (event.layerX - lastX) * 0.7;
+            xRot -= (event.layerY - lastY) * 0.7;
         }
 
         lastX = event.layerX;
@@ -341,6 +331,10 @@ export function setBatchesDrawn(count) {
 
 export function setMeshesDrawn(count) {
     document.getElementById("meshes").innerHTML = count + " meshes";
+}
+
+export function setCameraPositionUI(pos) {
+    document.getElementById("campos").innerHTML = "(" + pos.map(x => x.toFixed(2)).join(", ") + ")";
 }
 
 // EXPORTS

@@ -11,11 +11,14 @@
 p {
     color: #72a5f7;
     font-family: Arial, Helvetica, sans-serif;
+    margin: 1pt;
 }
 
 #info {
     display: flex;
     flex-direction: column;
+    column-gap: 0pt;
+
     position: fixed;
     left: 10pt;
     top: 10pt;

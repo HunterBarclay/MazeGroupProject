@@ -44,6 +44,7 @@ void main(void) {
     // CREDIT: https://stackoverflow.com/questions/42747784/how-to-convert-world-space-transform-to-object-space-transform
     vFragPos = (uVMatrix * uMVMatrix * vec4(pos, 1.0)).xyz;
     gl_Position = uPMatrix * uVMatrix * uMVMatrix * vec4(pos, 1.0);
+    // gl_Position = uPMatrix * uMVMatrix * uVMatrix * vec4(pos, 1.0);
 
     vTextureCoord = aTextureCoord;
 
