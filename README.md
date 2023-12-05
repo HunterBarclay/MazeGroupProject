@@ -54,6 +54,11 @@ We store all leaf nodes of the new graph (except for the start node if it is a l
 ### Techniques of Note
 #### Batch Rendering
 For rendering the walls of the maze, we will be utilizing batch rendering to try and make rendering multiple of the same mesh faster.
+Batch rendering is a technique used to efficiently render multiple instances of geometry in a single draw call.
+The *loadBatchInstances* method handles the loading of batch instances into buffers meant for rendering.
+It iterates through a subset of *batchInstances* based on the provided start index and the batch size.
+For each batch instance, it calls *writeInstanceToBuffer* on the batch instance. This method writes the instance's vertex, normal, texture coordinate, and index data into the respective buffers. Incrementing offsets ensures that each instance's data is placed correctly in the allocated buffers without overwriting previously loaded data. The method returns the number of batch instances loaded during this iteration.
+The *draw* method utilizes the loaded instances to perform draw calls efficiently. It renders batches in iterations, minimizing redundant calls and ensuring the rendering of all loaded instances.
 
 #### Frustrum Culling
 With making use of batch rendering, we'll be using frustrum culling to determine which parts of the maze can actually be seen by the user and only render those. This will cut down on the number of objects we need to render considerably.
