@@ -18,6 +18,8 @@ uniform vec2 uTextureScale;
 uniform float uSpecularIntensity;
 uniform float uDiffuseIntensity;
 uniform vec3 uAmbientLightColor;
+uniform float uFogRadius;
+uniform float uFogFalloff;
 
 void main(void) {
 
@@ -56,5 +58,12 @@ void main(void) {
     // gl_FragColor = vec4(biTangent, 1.0);
     // gl_FragColor = vec4(vNormTheta / 3.14159, vNormTheta / 3.14159, vNormTheta / 3.14159, 1.0);
 
-    // gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    float depth = min(1.0, max(0.0, length(vFragPos) / uFogRadius));
+    // gl_FragColor = vec4(depth, depth, depth, 1.0);
+
+    float fogX = (depth - uFogFalloff) * (1.0 / (1.0 - uFogFalloff));
+
+    // If Fog Radius is less than 1.0, fog effect will be disabled
+    gl_FragColor.a = 1.0 - step(1.0, uFogRadius) * (step(uFogFalloff, depth) * fogX);
+    gl_FragColor.rgb *= gl_FragColor.a;
 }

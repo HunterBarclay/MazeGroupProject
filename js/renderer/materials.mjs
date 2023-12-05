@@ -100,6 +100,9 @@ export class TestCubeMaterial extends Material {
     diffuseIntensity;
     ambientLightColor;
 
+    fogRadius;
+    fogFalloff;
+
     camera;
     mvMatrix;
 
@@ -127,6 +130,9 @@ export class TestCubeMaterial extends Material {
         this.specularIntensityUniform = gl.getUniformLocation(this.shaderProgram, "uSpecularIntensity");
         this.diffuseIntensityUniform = gl.getUniformLocation(this.shaderProgram, "uDiffuseIntensity");
         this.ambientLightColorUniform = gl.getUniformLocation(this.shaderProgram, "uAmbientLightColor");
+
+        this.fogRadiusUniform = gl.getUniformLocation(this.shaderProgram, "uFogRadius");
+        this.fogFalloffUniform = gl.getUniformLocation(this.shaderProgram, "uFogFalloff");
 
         this.positionAttribute = gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
         if (this.positionAttribute == -1) {
@@ -156,6 +162,9 @@ export class TestCubeMaterial extends Material {
         this.specularIntensity = 0.1;
         this.diffuseIntensity = 1.0;
         this.ambientLightColor = [0.7, 0.7, 0.7];
+
+        this.fogRadius = 0.0;
+        this.fogFalloff = 0.7;
         
         this.camera = new Camera(0.1, 10, 45, 16.0 / 9.0);
         this.mvMatrix = mat4.identity(mat4.create());
@@ -167,6 +176,9 @@ export class TestCubeMaterial extends Material {
         gl.uniform1f(this.diffuseIntensityUniform, this.diffuseIntensity);
         gl.uniform3fv(this.ambientLightColorUniform, this.ambientLightColor);
         gl.uniform3fv(this.dirLightUniform, normalizeVector(this.directionalLight));
+
+        gl.uniform1f(this.fogRadiusUniform, Math.max(0.0, Math.min(this.camera.farZ - this.camera.nearZ, this.fogRadius)));
+        gl.uniform1f(this.fogFalloffUniform, Math.max(0.0, Math.min(1.0, this.fogFalloff)));
 
         // Transformations
         gl.uniformMatrix4fv(this.pMatrixUniform, false, this.camera.getProjection());

@@ -79,7 +79,23 @@ var mazeWalls;
 /** @type {CullingFrustrum} */
 var cullingFrustrum;
 
-//cubeBatchInstance needs to be initialized
+export function regenMaze(width, height, difficulty) {
+    mazeWalls = [];
+    maze = generateMaze(width, height, difficulty);
+    var mazeLayout = maze.getArrayLayout();
+
+    for (var z = 0; z < mazeLayout.length; z++) {
+        for (var x = 0; x < mazeLayout[z].length; x++) {
+            if (mazeLayout[z][x] == 'X') {
+                mazeWalls.push(new BatchInstance(
+                    cubeMeshHandler,
+                    [x * 2.0, 0.0, z * 2.0]
+                ));
+            }
+        }
+    }
+}
+
 async function initMeshes() {
     const numBatchInstances = 4; // If not specified, will calculate
 
@@ -93,35 +109,19 @@ async function initMeshes() {
         await getShaderProgram(gl, "./shaders/test-cube-vs.glsl", "./shaders/test-cube-fs.glsl")
     );
 
-    testCubeMaterial.camera = new Camera(0.01, 70, 45, gl.viewportWidth / gl.viewportHeight);
+    testCubeMaterial.camera = new Camera(0.01, 140, 45, gl.viewportWidth / gl.viewportHeight);
     testCubeMaterial.textureScale = [1.0, 1.0];
     testCubeMaterial.specularIntensity = 0.1;
     testCubeMaterial.ambientLightColor = [0.2, 0.4, 0.6];
+    testCubeMaterial.fogRadius = 135.0;
 
     testCubeMaterial.mvMatrix = mat4.identity(mat4.create());
 
     batchMesh = new Mesh(batchGeo, testCubeMaterial);
 
-    mazeWalls = [];
-    maze = generateMaze(10, 10, 0.5);
-    var mazeLayout = maze.getArrayLayout();
-
-    for (var z = 0; z < mazeLayout.length; z++) {
-        for (var x = 0; x < mazeLayout[z].length; x++) {
-            if (mazeLayout[z][x] == 'X') {
-                mazeWalls.push(new BatchInstance(
-                    cubeMeshHandler,
-                    [x * 2.0, 0.0, z * 2.0]
-                ));
-            }
-        }
-    }
-
-    batchGeo.batchInstances = mazeWalls;
+    regenMaze(50, 50, 0.5);
 
     cullingFrustrum = new CullingFrustrum(testCubeMaterial.camera);
-
-    maze.print();
 }
 
 function initTextures() {
@@ -198,7 +198,8 @@ async function startHelloWebGL() {
     gl.cullFace(gl.BACK);
     // TODO: Prolly fix alpha or remove it. CREDIT: https://www.khronos.org/opengl/wiki/Face_Culling
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     // Draw the Scene
     Frames();
     // If doing an animation need to add code to rotate our geometry
@@ -226,7 +227,7 @@ function drawScene() {
     // mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.001, 30.0, pMatrix);
     // testCubeMaterial.camera.setPosition([0.0, 0.0, zPos]);
 
-    testCubeMaterial.directionalLight = [Math.cos(lightTheta), -1.0, Math.sin(lightTheta)];
+    testCubeMaterial.directionalLight = [Math.cos(lightTheta), -6.0, Math.sin(lightTheta)];
 
     testCubeMaterial.camera.setRotation([xRot, yRot, 0.0]);
 
