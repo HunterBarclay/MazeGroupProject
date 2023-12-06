@@ -1,7 +1,7 @@
 import BatchInstance from "./batch-instance.mjs";
 import { Geometry } from "./geometry.mjs";
 import MeshHandler from "./mesh-handler.mjs";
-import { setBatchesDrawn, setMeshesDrawn } from "./renderer.mjs";
+import { setBatchesDrawn, setMeshesDrawn } from "../game.mjs";
 
 // 200KB
 const TARGET_SIZE_FOR_BATCH_BUFFERS = 200000;
