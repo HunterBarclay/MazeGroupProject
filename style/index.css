@@ -1,5 +1,10 @@
 @import url(https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap);
 
+body {
+    color: #72a5f7;
+    font-family: 'Montserrat', sans-serif;
+}
+
 #canvas-container {
     position: absolute;
     top: 0pt;
@@ -11,8 +16,6 @@
 }
 
 p {
-    color: #72a5f7;
-    font-family: 'Montserrat', sans-serif;
     margin: 1pt;
     font-weight: 600;
 }
@@ -28,4 +31,21 @@ p {
 
     width: fit-content;
     height: fit-content;
+}
+
+#regen-button {
+    font-family: 'Montserrat', sans-serif;
+
+    border: none;
+    background-color: #72a5f7;
+    color: rgb(22, 22, 22);
+    padding: 10pt 20pt;
+    border-radius: 5pt;
+
+    position: fixed;
+    right: 10pt;
+    bottom: 10pt;
+
+    text-anchor: middle;
+    text-align: center;
 }

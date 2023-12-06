@@ -136,6 +136,7 @@ class FullTextureShaderProgram extends ShaderProgram {
         this.roughnessTextureUniform = gl.getUniformLocation(this.program, "uRoughness");
 
         this.dirLightUniform = gl.getUniformLocation(this.program, "uDirLight");
+        this.pointLightPositionUniform = gl.getUniformLocation(this.program, "uPointLightPosition");
         this.textureScaleUniform = gl.getUniformLocation(this.program, "uTextureScale");
         this.specularIntensityUniform = gl.getUniformLocation(this.program, "uSpecularIntensity");
         this.diffuseIntensityUniform = gl.getUniformLocation(this.program, "uDiffuseIntensity");
@@ -160,6 +161,7 @@ class FullTextureShaderProgram extends ShaderProgram {
         gl.uniform1f(this.diffuseIntensityUniform, unis.diffuseIntensity);
         gl.uniform3fv(this.ambientLightColorUniform, unis.ambientLightColor);
         gl.uniform3fv(this.dirLightUniform, normalizeVector(unis.directionalLight));
+        gl.uniform3fv(this.pointLightPositionUniform, unis.pointLightPosition);
 
         gl.uniform1f(this.fogRadiusUniform, Math.max(0.0, Math.min(unis.camera.farZ - unis.camera.nearZ, unis.fogRadius)));
         gl.uniform1f(this.fogFalloffUniform, Math.max(0.0, Math.min(1.0, unis.fogFalloff)));
@@ -291,6 +293,7 @@ export class Material {
 export class TestCubeMaterial extends Material {
 
     directionalLight;
+    pointLightPosition;
 
     textureScale;
     specularIntensity;
@@ -318,6 +321,7 @@ export class TestCubeMaterial extends Material {
         this.roughnessTexture = null;
 
         this.directionalLight = [0.0, -1.0, 0.0];
+        this.pointLightPosition = [0.0, 0.0, 0.0];
         this.textureScale = [1.0, 1.0];
         this.specularIntensity = 0.1;
         this.diffuseIntensity = 1.0;

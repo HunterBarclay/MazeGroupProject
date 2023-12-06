@@ -6,6 +6,7 @@ varying vec3 vNormal;
 varying vec3 vTangent;
 varying float vNormTheta;
 varying vec3 vFragPos;
+varying vec3 vFragPosWorld;
 
 uniform mat4 uMVMatrix;
 
@@ -20,6 +21,18 @@ uniform float uDiffuseIntensity;
 uniform vec3 uAmbientLightColor;
 uniform float uFogRadius;
 uniform float uFogFalloff;
+
+uniform vec3 uPointLightPosition;
+
+float calculateDiffuseLight(vec3 lightDir, vec3 normal) {
+    return uDiffuseIntensity * max(dot(normal, -lightDir), 0.0);
+}
+
+float calculateSpecularLight(float shininess, vec3 lightDir, vec3 normal) {
+    vec3 viewDir = normalize(vFragPos);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    return uSpecularIntensity * pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+}
 
 void main(void) {
 
@@ -36,19 +49,26 @@ void main(void) {
 
     // CREDIT: http://www.c-jump.com/bcc/common/Talk3/OpenGL/Wk06_light/Wk06_light.html and https://learnopengl.com/Lighting/Basic-Lighting
     float shininess = 1.0 - length(texture2D(uRoughness, vec2(texCoord.s, texCoord.t)).rgb) / sqrt(3.0);
-    // float shininess = 0.9;
-    vec3 viewDir = normalize(vFragPos);
-    vec3 reflectDir = reflect(-uDirLight, normal);
-    float specular = uSpecularIntensity * pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-
-    // if (!gl_FrontFacing) {
-    //     normal = -vNormal;
-    // }
+    float specularDirect = calculateSpecularLight(shininess, uDirLight, normal);
 
     col *= ambientOcc;
 
-    float diffuse = uDiffuseIntensity * max(dot(normal, -uDirLight), 0.0);
-    gl_FragColor = vec4(col * diffuse + col * uAmbientLightColor + col * specular, 1.0);
+    float diffuseDirect = calculateDiffuseLight(uDirLight, normal);
+    gl_FragColor = vec4(col * diffuseDirect + col * uAmbientLightColor + col * specularDirect, 1.0);
+    // gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+    vec3 pointDir = vFragPosWorld - uPointLightPosition;
+    vec3 pointCol = vec3(0.7, 1.0, 1.0);
+    float pointRadius = 3.0;
+    float pointCoef = 1.5;
+    float pointIntensity = max(pointCoef * (pointRadius - length(pointDir)), 0.0) / pointRadius;
+    pointIntensity = pow(pointIntensity, 2.0);
+
+    float diffusePoint = calculateDiffuseLight(normalize(pointDir), normal);
+    float specularPoint = calculateSpecularLight(shininess, normalize(pointDir), normal);
+    pointCol *= diffusePoint + specularPoint;
+
+    gl_FragColor += vec4((col * pointCol) * pointIntensity, 0.0);
 
     // TEST COLORS
     // gl_FragColor = vec4(shininess, shininess, shininess, 1.0);

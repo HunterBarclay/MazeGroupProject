@@ -12,10 +12,13 @@ varying vec3 vNormal;
 varying vec3 vTangent;
 varying float vNormTheta;
 varying vec3 vFragPos;
+varying vec3 vFragPosWorld;
 
 uniform sampler2D uSampler;
 uniform sampler2D uNormal;
 uniform sampler2D uAmbientMap;
+
+uniform vec3 uPointLightPosition;
 
 vec4 rotateAroundX(vec4 vec, float phi) {
     mat4 rotMat = mat4(
@@ -45,6 +48,8 @@ void main(void) {
     vFragPos = (uVMatrix * uMVMatrix * vec4(pos, 1.0)).xyz;
     gl_Position = uPMatrix * uVMatrix * uMVMatrix * vec4(pos, 1.0);
     // gl_Position = uPMatrix * uMVMatrix * uVMatrix * vec4(pos, 1.0);
+
+    vFragPosWorld = (uMVMatrix * vec4(pos, 1.0)).xyz;
 
     vTextureCoord = aTextureCoord;
 
