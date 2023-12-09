@@ -49,3 +49,9 @@ p {
     text-anchor: middle;
     text-align: center;
 }
+
+#iscol {
+    width: 80pt;
+    height: 20pt;
+    border-radius: 5pt;
+}

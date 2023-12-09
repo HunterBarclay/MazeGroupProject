@@ -4,7 +4,7 @@ import { drawScene, loadTexture } from "./renderer/renderer.mjs";
 import BatchInstance from "./renderer/batch-instance.mjs";
 import { GetBasicEmissionShaderProgram, GetFullTextureShaderProgram, BasicEmissionMaterial, TestCubeMaterial } from "./renderer/materials.mjs";
 import { mat4 } from "./util/glMatrix_util.mjs";
-import { addVector, generateCubeMesh, magnitudeVector, multVector, normalizeVector, subtractVector } from "./renderer/mesh-handler.mjs";
+import { addVector, dotProductVector, generateCubeMesh, magnitudeVector, multVector, normalizeVector, subtractVector } from "./renderer/mesh-handler.mjs";
 import CullingFrustrum from "./renderer/culling-frustrum.mjs";
 import refitCanvas from "./util/refit-canvas.mjs";
 import Camera from "./components/camera.mjs";
@@ -13,6 +13,7 @@ import { requestAnimFrame } from "./util/webgl-utils.mjs";
 import { BasicGeometry } from "./renderer/geometry.mjs";
 import BatchGeometry from "./renderer/batch-geometry.mjs";
 import { parseObjFile } from "./util/obj-parser.mjs"
+import { generateContact } from "./physics/physics.mjs";
 
 /** @type {Mesh} */
 var batchMesh;
@@ -26,6 +27,9 @@ var endMarkerMesh;
 /** @type {Maze} */
 var maze;
 
+/** @type {Array<Array<String>>} */
+var mazeLayout;
+
 /** @type {Array<BatchInstance>} */
 var mazeWalls;
 
@@ -35,32 +39,36 @@ var cullingFrustrum;
 /** @type {Camera} */
 var mainCamera;
 
+var cameraPosition;
+
 // Initialization
 
 export function regenMaze(width, height, difficulty) {
     mazeWalls = [];
     maze = generateMaze(width, height, difficulty);
-    var mazeLayout = maze.getArrayLayout();
+    mazeLayout = maze.getArrayLayout();
 
     for (var z = 0; z < mazeLayout.length; z++) {
         for (var x = 0; x < mazeLayout[z].length; x++) {
             if (mazeLayout[z][x] == 'X') {
                 mazeWalls.push(new BatchInstance(
                     batchMesh.geometry.meshHandler,
-                    [x * 2.0, 0.0, z * 2.0]
+                    [x, 0.0, z]
                 ));
             }
         }
     }
 
     // Update markers
-    var startPos = addVector(multVector(maze.startPosition, 4.0), [2.0, 0.0, 2.0]);
-    startPos[1] = 1.0;
-    var endPos = addVector(multVector(maze.endPosition, 4.0), [2.0, 0.0, 2.0]);
-    endPos[1] = 1.0;
+    var startPos = addVector(multVector(maze.startPosition, 2.0), [1.0, 0.0, 1.0]);
+    // startPos[1] = 0.0;
+    var endPos = addVector(multVector(maze.endPosition, 2.0), [1.0, 0.0, 1.0]);
+    // endPos[1] = 0.5;
 
     setMarkerPosition(startMarkerMesh, startPos);
     setMarkerPosition(endMarkerMesh, endPos);
+
+    cameraPosition = [startPos[0], 0, startPos[2]];
 }
 
 async function createMazeWallMesh() {
@@ -109,7 +117,7 @@ async function createMarkerMesh(color) {
 }
 
 function setMarkerPosition(markerMesh, position) {
-    position[1] = 4;
+    position[1] = 2.0;
     var mat = markerMesh.material;
     var transform = mat4.identity(mat4.create());
     mat.mvMatrix = mat4.scale(mat4.translate(transform, position), [0.2, 5.0, 0.2]);
@@ -131,12 +139,12 @@ async function initMeshes() {
 
 // Per Frame
 
-var xRot = -20.0;
-var yRot = 225.0;
+var xRot = 0.0;
+var yRot = 0.0;
 var lightTheta = 0.0;
-var cameraPosition = [0.0, 4.0, 0.0];
 
-const cameraSpeed = 8.0;
+const cameraSpeed = 2.2;
+const cameraSprintSpeed = 4.0;
 
 function tick(deltaT) {
     
@@ -149,9 +157,63 @@ function tick(deltaT) {
     if (magnitudeVector(movement) > 1.0) {
         movement = normalizeVector(movement);
     }
-    cameraPosition = addVector(cameraPosition, multVector(movement, deltaT * cameraSpeed));
+    movement[1] = 0.0;
+
+    var cameraDelta = multVector(movement, deltaT * (keys['shift'] ? cameraSprintSpeed : cameraSpeed));
+    var projectedPosition = [cameraPosition[0] + cameraDelta[0], cameraPosition[2] + cameraDelta[2]];
+    var layoutIndex = [Math.round(projectedPosition[0]), Math.round(projectedPosition[1])];
+
+    var contactNormals = [];
+
+    if (cameraPosition[1] + cameraDelta[1] < 1.0) {
+        for (var z = layoutIndex[1] - 1; z < layoutIndex[1] + 2; z++) {
+            for (var x = layoutIndex[0] - 1; x < layoutIndex[0] + 2; x++) {
+                if (z >= 0 && z < mazeLayout.length && x >= 0 && mazeLayout[z].length) {
+                    if (mazeLayout[z][x] == 'X') {
+                        var norm = generateContact(
+                            projectedPosition,
+                            0.08,
+                            [x, z],
+                            0.5
+                        );
+
+                        if (norm != null && magnitudeVector(norm) > 0.0001) {
+                            contactNormals.push(norm);
+                            // console.log(norm);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    setIsColliding(contactNormals.length != 0);
+
+    if (contactNormals.length > 0) {
+        var maxContact = [0.0, 0.0, 0.0];
+        for (var i = 0; i < contactNormals.length; i++) {
+            if (Math.abs(maxContact[0]) < Math.abs(contactNormals[i][0])) {
+                maxContact[0] = contactNormals[i][0];
+            }
+            if (Math.abs(maxContact[2]) < Math.abs(contactNormals[i][2])) {
+                maxContact[2] = contactNormals[i][2];
+            }
+        }
+
+        var diff = maxContact;
+        cameraDelta = subtractVector(cameraDelta, diff);
+    }
+
+    // if (collisionNormal) {
+    //     console.log(collisionNormal);
+    //     cameraDelta = subtractVector(cameraDelta, collisionNormal);
+    // }
+
+    cameraPosition = addVector(cameraPosition, cameraDelta);
 
     mainCamera.setPosition(cameraPosition);
+
+    
 
     setCameraPositionUI(mainCamera.position);
 
@@ -222,16 +284,10 @@ function onMouseUp(event) {
 
 function onMouseMove(event) {
     if (isDown) {
-        if (event.shiftKey) { // If Shift, zoom
-            zPos += (event.layerY - lastY) * -0.03;
-            zPos = Math.max(Math.min(zPos, 0), -40);
-            // 
-        } else { // If not, rotate
-            yRot -= (event.layerX - lastX) * 0.7;
-            xRot -= (event.layerY - lastY) * 0.7;
+        yRot -= (event.layerX - lastX) * 0.7;
+        xRot -= (event.layerY - lastY) * 0.7;
 
-            xRot = Math.max(-85.0, Math.min(85.0, xRot));
-        }
+        xRot = Math.max(-85.0, Math.min(85.0, xRot));
 
         lastX = event.layerX;
         lastY = event.layerY;
@@ -239,11 +295,11 @@ function onMouseMove(event) {
 }
 
 function onKeyDown(event) {
-    keys[event.key] = true;
+    keys[event.key.toLowerCase()] = true;
 }
 
 function onKeyUp(event) {
-    keys[event.key] = false;
+    keys[event.key.toLowerCase()] = false;
 }
 
 // TEMP UI
@@ -262,6 +318,10 @@ export function setMeshesDrawn(count) {
 
 export function setCameraPositionUI(pos) {
     document.getElementById("campos").innerHTML = "(" + pos.map(x => x.toFixed(2)).join(", ") + ")";
+}
+
+function setIsColliding(isColliding) {
+    document.getElementById("iscol").style.backgroundColor = isColliding ? "#34e363" : "#e33434";
 }
 
 export default startGame;
