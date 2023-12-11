@@ -140,10 +140,13 @@ class FullTextureShaderProgram extends ShaderProgram {
         this.textureScaleUniform = gl.getUniformLocation(this.program, "uTextureScale");
         this.specularIntensityUniform = gl.getUniformLocation(this.program, "uSpecularIntensity");
         this.diffuseIntensityUniform = gl.getUniformLocation(this.program, "uDiffuseIntensity");
+        this.pointLightIntensityUniform = gl.getUniformLocation(this.program, "uPointLightIntensity");
         this.ambientLightColorUniform = gl.getUniformLocation(this.program, "uAmbientLightColor");
 
         this.fogRadiusUniform = gl.getUniformLocation(this.program, "uFogRadius");
         this.fogFalloffUniform = gl.getUniformLocation(this.program, "uFogFalloff");
+
+        this.debugModeUniform = gl.getUniformLocation(this.program, "uDebugMode");
     }
 
     /**
@@ -156,12 +159,15 @@ class FullTextureShaderProgram extends ShaderProgram {
 
         this.useProgram(gl);
 
+        gl.uniform1f(this.debugModeUniform, unis.debugMode);
+
         // Lighting
         gl.uniform1f(this.specularIntensityUniform, unis.specularIntensity);
         gl.uniform1f(this.diffuseIntensityUniform, unis.diffuseIntensity);
         gl.uniform3fv(this.ambientLightColorUniform, unis.ambientLightColor);
         gl.uniform3fv(this.dirLightUniform, normalizeVector(unis.directionalLight));
         gl.uniform3fv(this.pointLightPositionUniform, unis.pointLightPosition);
+        gl.uniform1f(this.pointLightIntensityUniform, unis.pointLightIntensity);
 
         gl.uniform1f(this.fogRadiusUniform, Math.max(0.0, Math.min(unis.camera.farZ - unis.camera.nearZ, unis.fogRadius)));
         gl.uniform1f(this.fogFalloffUniform, Math.max(0.0, Math.min(1.0, unis.fogFalloff)));
@@ -292,6 +298,8 @@ export class Material {
 
 export class TestCubeMaterial extends Material {
 
+    debugMode;
+
     directionalLight;
     pointLightPosition;
 
@@ -299,6 +307,7 @@ export class TestCubeMaterial extends Material {
     specularIntensity;
     diffuseIntensity;
     ambientLightColor;
+    pointLightIntensity;
 
     fogRadius;
     fogFalloff;
@@ -315,6 +324,8 @@ export class TestCubeMaterial extends Material {
 
         super(shaderProgram);
 
+        this.debugMode = 0;
+
         this.baseTexture = null;
         this.normalTexture = null;
         this.ambientOcclusionTexture = null;
@@ -325,6 +336,7 @@ export class TestCubeMaterial extends Material {
         this.textureScale = [1.0, 1.0];
         this.specularIntensity = 0.1;
         this.diffuseIntensity = 1.0;
+        this.pointLightIntensity = 1.0;
         this.ambientLightColor = [0.7, 0.7, 0.7];
 
         this.fogRadius = 0.0;

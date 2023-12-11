@@ -23,10 +23,7 @@ class MeshHandler {
     getByteSize() {
         return this.vertexArray.byteLength + this.normalArray.byteLength + this.texCoordArray.byteLength + this.indexArray.byteLength;
     }
-    
 }
-
-export const gridSize = 128;
 
 export function magnitudeVector(v) {
     return Math.sqrt(
@@ -134,58 +131,109 @@ function generateNormals(vertices, indices) {
     return normals;
 }
 
-function mapVert(x) { return (2.0 / gridSize) * x - 1; }
+function mapVertDefault(x, gridSize) { return (1.0 / (gridSize - 1)) * x  - 0.5 }
 function mapVert2(x, y) { return [mapVert(x), mapVert(y)]; }
-function mapTexCoord(x) { return (mapVert(x) + 1.0) / 2.0; }
+function mapTexCoordDefault(x, gridSize) { return (mapVertDefault(x) + 1.0) / 2.0; }
 
 function generateHeightMap(s, t) {
     return Math.sin((s + t) * 30) * 0.05;
 }
 
-export function generateGridMesh(useHeightMap = false, heightMapFunc = generateHeightMap) {
+export function generateGridMesh(useHeightMap = false, heightMapFunc = generateHeightMap,
+    mapVert = mapVertDefault, mapTexCoord = mapTexCoordDefault, gridSize = 64) {
     var vertices = [];
     var indices = [];
     var texCoords = [];
     var normals = [];
 
-    const test = generateNormalsOfTriangle(
-        [0, 0, 0],
-        [0, 0, 1],
-        [2, 0, 0]
-    );
+    // if (!useHeightMap) {
+    //     heightMapFunc = (_, _) => 0.0;
+    // }
 
-    var y1 = 0.0; // Top Left
-    var y2 = 0.0; // Top Right
-    var y3 = 0.0; // Bottom Left
-    var y4 = 0.0; // Bottom Right
+    var smoothNormal = (me, front, back, left, right) => {
+        var frontNormal = crossProductVector(
+            normalizeVector(subtractVector(
+                front,
+                me
+            )),
+            [1.0, 0.0, 0.0]
+        );
+        var backNormal = crossProductVector(
+            normalizeVector(subtractVector(
+                back,
+                me
+            )),
+            [-1.0, 0.0, 0.0]
+        );
+        var leftNormal = crossProductVector(
+            normalizeVector(subtractVector(
+                left,
+                me
+            )),
+            [0.0, 0.0, -1.0]
+        );
+        var rightNormal = crossProductVector(
+            normalizeVector(subtractVector(
+                right,
+                me
+            )),
+            [0.0, 0.0, 1.0]
+        );
 
-    var heightMap = heightMapFunc();
+        return normalizeVector(addVector(addVector(addVector(frontNormal, backNormal), leftNormal), rightNormal));
+    };
+
+    var getVert = (x, z, gridSize) => {
+        return [
+            mapVert(x, gridSize),
+            heightMapFunc(mapTexCoord(x, gridSize), mapTexCoord(z, gridSize)),
+            mapVert(z, gridSize)
+        ];
+    };
+
+    var getTex = (x, z, gridSize) => {
+        return [ mapTexCoord(x, gridSize), mapTexCoord(z, gridSize) ];
+    }
+
+    var vert2d = new Array(gridSize + 1);
+    var tex2d = new Array(gridSize + 1);
+    var norm2d = new Array(gridSize + 1);
+
+    for (var z = 0; z < gridSize + 1; z++) {
+        vert2d[z] = new Array(gridSize + 1);
+        tex2d[z] = new Array(gridSize + 1);
+        for (var x = 0; x < gridSize + 1; x++) {
+            vert2d[z][x] = getVert(x, z, gridSize);
+            tex2d[z][x] = getTex(x, z, gridSize);
+        }
+    }
+
+    for (var z = 0; z < gridSize + 1; z++) {
+        norm2d[z] = new Array(gridSize + 1);
+        for (var x = 0; x < gridSize + 1; x++) {
+            norm2d[z][x] = smoothNormal(
+                vert2d[z][x],
+                z < gridSize ? vert2d[z + 1][x] : vert2d[z][x],
+                z > 0 ? vert2d[z - 1][x] : vert2d[z][x],
+                x < gridSize ? vert2d[z][x + 1] : vert2d[z][x],
+                x > 0 ? vert2d[z][x - 1] : vert2d[z][x]
+            );
+        }
+    }
 
     for (var x = 0; x < gridSize; x++) {
         for (var z = 0; z < gridSize; z++) {
 
-            if (useHeightMap) {
-                y1 = heightMapFunc(mapTexCoord(x),     mapTexCoord(z)    );
-                y2 = heightMapFunc(mapTexCoord(x + 1), mapTexCoord(z)    );
-                y3 = heightMapFunc(mapTexCoord(x),     mapTexCoord(z + 1));
-                y4 = heightMapFunc(mapTexCoord(x + 1), mapTexCoord(z + 1));
-            } else {
-                y1 = 0.0;
-                y2 = 0.0;
-                y3 = 0.0;
-                y4 = 0.0;
-            }
-
             vertices.push(
                 // Top Left
-                mapVert(x), y1, mapVert(z),
-                mapVert(x), y3, mapVert(z + 1),
-                mapVert(x + 1), y2, mapVert(z),
+                vert2d[z][x][0], vert2d[z][x][1], vert2d[z][x][2],
+                vert2d[z + 1][x][0], vert2d[z + 1][x][1], vert2d[z + 1][x][2],
+                vert2d[z][x + 1][0], vert2d[z][x + 1][1], vert2d[z][x + 1][2],
 
                 // Bottom Right
-                mapVert(x), y3, mapVert(z + 1),
-                mapVert(x + 1), y4, mapVert(z + 1),
-                mapVert(x + 1), y2, mapVert(z)
+                vert2d[z + 1][x][0], vert2d[z + 1][x][1], vert2d[z + 1][x][2],
+                vert2d[z + 1][x + 1][0], vert2d[z + 1][x + 1][1], vert2d[z + 1][x + 1][2],
+                vert2d[z][x + 1][0], vert2d[z][x + 1][1], vert2d[z][x + 1][2]
             );
 
             var indiceOffset = (x * gridSize + z) * 6;
@@ -196,19 +244,33 @@ export function generateGridMesh(useHeightMap = false, heightMapFunc = generateH
 
             texCoords.push(
                 // Top Left
-                mapTexCoord(x), mapTexCoord(z),
-                mapTexCoord(x), mapTexCoord(z + 1),
-                mapTexCoord(x + 1), mapTexCoord(z),
+                tex2d[z][x][0], tex2d[z][x][1],
+                tex2d[z + 1][x][0], tex2d[z + 1][x][1],
+                tex2d[z][x + 1][0], tex2d[z][x + 1][1],
 
                 // Bottom Right
-                mapTexCoord(x), mapTexCoord(z + 1),
-                mapTexCoord(x + 1), mapTexCoord(z + 1),
-                mapTexCoord(x + 1), mapTexCoord(z)
+                tex2d[z + 1][x][0], tex2d[z + 1][x][1],
+                tex2d[z + 1][x + 1][0], tex2d[z + 1][x + 1][1],
+                tex2d[z][x + 1][0], tex2d[z][x + 1][1]
             );
+
+            if (useHeightMap) {
+                normals.push(
+                    norm2d[z][x][0], norm2d[z][x][1], norm2d[z][x][2],
+                    norm2d[z + 1][x][0], norm2d[z + 1][x][1], norm2d[z + 1][x][2],
+                    norm2d[z][x + 1][0], norm2d[z][x + 1][1], norm2d[z][x + 1][2],
+
+                    norm2d[z + 1][x][0], norm2d[z + 1][x][1], norm2d[z + 1][x][2],
+                    norm2d[z + 1][x + 1][0], norm2d[z + 1][x + 1][1], norm2d[z + 1][x + 1][2],
+                    norm2d[z][x + 1][0], norm2d[z][x + 1][1], norm2d[z][x + 1][2]
+                );
+            }
         }
     }
 
-    normals = generateNormals(vertices, indices);
+    if (!useHeightMap) {
+        normals = generateNormals(vertices, indices);
+    }
 
     return new MeshHandler(vertices, indices, normals, texCoords);
 }

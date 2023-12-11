@@ -4,7 +4,7 @@ This is a group project for CS464. Team is Hunter Barclay, Josh Martin, Jordan C
 ## Usage
 
 ### GitHub Pages
-The project is hosted with GitHub pages [here](https://kyrovibe.github.io/MazeGroupProject/).
+The project's `main` branch is hosted with GitHub pages [here](https://kyrovibe.github.io/MazeGroupProject/).
 
 ### Self Hosting
 This web app can be used with a simple http server and accessed by most if not all web browsers.
@@ -37,7 +37,13 @@ This project will use JavaScript within an html page. We will make use of WebGL 
 ## The Code
 ### Core Components
 #### Renderer
-TBD
+The renderer is mostly modeled after THREE.JS. We have 4 main components to the renderer:
+- Shader Programs -> These handle compiled shaders as well as loading and binding uniforms and vertex attributes.
+- Materials -> These interface with shader programs to specify values for said uniforms. The idea is we'll have one textured shader program, but two materials: one for the walls, and one for the ground.
+- Geometry -> These manage the buffer objects and original mesh data
+- Meshes -> These glue all the aforementioned objects together to make draw calls simpler.
+
+We have two main types of Geometry: Basic Geometry which contains simple, single-instanced geometry, and BatchedGeometry, which allows us to more efficiently draw multiple of the same mesh data at different positions.
 
 #### Maze Generation
 ##### Example
@@ -75,7 +81,11 @@ The following textures were all distributed under a [Creative Commons License](/
 - [Stylized Dry Mud Textures](/assets/textures/style-dry-mud/)
 - [Ground Dirt Textures](/assets/textures/ground-dirt/)
 
-## License
-This repository is under the [MIT License](/LICENSE.md).
+## Third Party JS and APIs
+### [NoiseJS](https://github.com/josephg/noisejs)
+NoiseJS is a simple perlin noise library. The minified version of their source can be found [here](/js/vendor/noisejs/), along with their [ISC License](js/vendor/noisejs/ISC_LICENSE.md).
 
-Read below to see which assets/files were sourced under different licenses.
+## License
+This repository is provided under the [MIT License](/LICENSE.md).
+
+Read above to see which assets/files were sourced under different licenses.

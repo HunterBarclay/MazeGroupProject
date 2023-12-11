@@ -1,13 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!--
-    NEEDS TANGENT VECTORS:
-    Use this:
-    float3 ws_normal = tangent * ts_normal.x + binormal * ts_normal.y + normal * ts_normal.z;
-    // CREDIT - https://forum.beyond3d.com/threads/how-to-convert-tangent-space-normal-to-world-space.48001/
--->
-
 <head>
     <meta charset="utf-8" />
     <title>Maze</title>
@@ -21,6 +13,9 @@
 
     <!-- main module with runtime -->
     <script type="module" src="js/app.mjs"></script>
+
+    <!-- vendor: NoiseJS (https://github.com/josephg/noisejs) -->
+    <script src="js/vendor/noisejs/perlin.js"></script>
 
     <script></script>
 
@@ -44,11 +39,21 @@
         <p id="batches">- batches</p>
         <p id="meshes">- meshes</p>
         <div id="iscol"></div>
+        <p id="instructions">how to:<br />wasd to move<br />hold click and use mouse to look</p>
     </div>
 
     <button id="regen-button">
         regenerate
     </button>
+
+    <select id="debug-select"></select>
+
+    <div id="sliders">
+        <label for="maze-size">maze size</label>
+        <input type="range" id="maze-size" min="4" max="40" value="20" />
+        <label for="maze-size">maze difficulty</label>
+        <input type="range" id="maze-diff" min="0.1" max="1.0" step="0.05" value="0.5" />
+    </div>
 
 </body>
 
