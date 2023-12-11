@@ -72,6 +72,7 @@ With making use of batch rendering, we'll be using frustrum culling to determine
 ## Assets
 ### Meshes
 The [Sphere Mesh](/assets/meshes/sphere.obj) was created in Blender, used for testing materials.
+The [End Thing](/assets/meshes/endThing.obj) was created in Blender, used as the end zone marker.
 
 ### Textures
 The following textures were all distributed under a [Creative Commons License](/assets/textures/CC_LICENSE.md) and were sourced from [3D Textures](https://3dtextures.me/):

@@ -69,6 +69,10 @@ void main(void) {
     float specularPoint = calculateSpecularLight(shininess, normalize(pointDir), normal);
     pointCol *= diffusePoint + specularPoint;
 
+    if (abs(uDebugMode - 3.0) < 0.001) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+
     gl_FragColor += vec4((col * pointCol) * pointIntensity, 0.0);
 
     // TEST COLORS

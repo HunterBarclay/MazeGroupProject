@@ -224,6 +224,50 @@ class BasicEmissionShaderProgram extends ShaderProgram {
     }
 }
 
+class BasicShadedShaderProgram extends ShaderProgram {
+    constructor(gl, program) {
+        super(gl, program);
+
+        this.pMatrixUniform = gl.getUniformLocation(this.program, "uPMatrix");
+        this.vMatrixUniform = gl.getUniformLocation(this.program, "uVMatrix");
+        this.mvMatrixUniform = gl.getUniformLocation(this.program, "uMVMatrix");
+        this.colorUniform = gl.getUniformLocation(this.program, "uColor");
+        
+        this.lightDirectionUniform = gl.getUniformLocation(this.program, "uLightDirection");
+        this.diffuseIntensityUniform = gl.getUniformLocation(this.program, "uDiffuseIntensity");
+        this.specularIntensityUniform = gl.getUniformLocation(this.program, "uSpecularIntensity");
+        this.ambientLightColorUniform = gl.getUniformLocation(this.program, "uAmbientLightColor");
+        this.pointLightPositionUniform = gl.getUniformLocation(this.program, "uPointLightPosition");
+        this.pointLightIntensityUniform = gl.getUniformLocation(this.program, "uPointLightIntensity");
+
+        this.debugModeUniform = gl.getUniformLocation(this.program, "uDebugMode");
+    }
+
+    /**
+     * Loads uniforms into shader program
+     * 
+     * @param {WebGLRenderingContext} gl WebGL Context
+     * @param {Object} unis Object containing all uniform data
+     */
+    loadUniforms(gl, unis) {
+        this.useProgram(gl);
+
+        gl.uniformMatrix4fv(this.pMatrixUniform, false, unis.camera.getProjection());
+        gl.uniformMatrix4fv(this.mvMatrixUniform, false, unis.mvMatrix);
+        gl.uniformMatrix4fv(this.vMatrixUniform, false, unis.camera.getTransformation());
+        gl.uniform4fv(this.colorUniform, unis.color);
+
+        gl.uniform3fv(this.lightDirectionUniform, normalizeVector(unis.lightDirection));
+        gl.uniform1f(this.diffuseIntensityUniform, unis.diffuseIntensity);
+        gl.uniform1f(this.specularIntensityUniform, unis.specularIntensity);
+        gl.uniform3fv(this.ambientLightColorUniform, unis.ambientLightColor);
+        gl.uniform3fv(this.pointLightPositionUniform, unis.pointLightPosition);
+        gl.uniform1f(this.pointLightIntensityUniform, unis.pointLightIntensity);
+
+        gl.uniform1f(this.debugModeUniform, unis.debugMode);
+    }
+}
+
 /** @type {FullTextureShaderProgram} */
 var fullTextProgram = null;
 export async function GetFullTextureShaderProgram(gl) {
@@ -248,6 +292,19 @@ export async function GetBasicEmissionShaderProgram(gl) {
     }
 
     return basicEmisProgram;
+}
+
+/** @type {BasicShadedShaderProgram} */
+var basicShadedProgram = null;
+export async function GetBasicShadedShaderProgram(gl) {
+    if (basicShadedProgram === null) {
+        basicShadedProgram = new BasicShadedShaderProgram(
+            gl,
+            await getShaderProgram(gl, "./shaders/basic-shaded-vs.glsl", "./shaders/basic-shaded-fs.glsl")
+        );
+    }
+
+    return basicShadedProgram;
 }
 
 export class Material {
@@ -375,6 +432,45 @@ export class BasicEmissionMaterial extends Material {
         
         this.camera = camera;
         this.mvMatrix = mat4.identity(mat4.create());
+    }
+
+    loadUniforms(gl) {
+        this.shaderProgram.loadUniforms(gl, this);
+    }
+}
+
+export class BasicShadedMaterial extends Material {
+
+    /** @type {Array<Number>} */
+    color;
+    /** @type {Array<Number>} */
+    mvMatrix;
+    /** @type {Camera} */
+    camera;
+
+    /**
+     * Constructs a new material with a given shader program.
+     * 
+     * @param {WebGLRenderingContext} gl WebGL Context
+     * @param {ShaderProgram} shaderProgram Shader Program
+     * @param {Camera} camera Main Camera
+     */
+    constructor(gl, shaderProgram, camera) {
+
+        super(shaderProgram);
+        
+        this.color = [1.0, 1.0, 1.0, 1.0];
+        this.lightDirection = [0.0, -1.0, 0.0];
+        this.diffuseIntensity = 1.0;
+        this.specularIntensity = 0.0;
+        this.ambientLightColor = [0.2, 0.2, 0.2, 1.0];
+        this.pointLightIntensity = 1.0;
+        this.pointLightPosition = [0.0, 0.0, 0.0];
+        
+        this.camera = camera;
+        this.mvMatrix = mat4.identity(mat4.create());
+
+        this.debugMode = 0.0;
     }
 
     loadUniforms(gl) {

@@ -2,10 +2,10 @@ import { Mesh } from "./renderer/mesh.mjs";
 import { Maze, generateMaze } from "./util/maze-gen.mjs";
 import { drawScene, loadTexture } from "./renderer/renderer.mjs";
 import BatchInstance from "./renderer/batch-instance.mjs";
-import { GetBasicEmissionShaderProgram, GetFullTextureShaderProgram, BasicEmissionMaterial, TestCubeMaterial } from "./renderer/materials.mjs";
+import { GetBasicEmissionShaderProgram, GetFullTextureShaderProgram, BasicEmissionMaterial, TestCubeMaterial, BasicShadedMaterial, GetBasicShadedShaderProgram } from "./renderer/materials.mjs";
 import { mat4 } from "./util/glMatrix_util.mjs";
 import { addVector, dotProductVector, generateCubeMesh, generateGridMesh, magnitudeVector, multVector, normalizeVector, subtractVector } from "./renderer/mesh-handler.mjs";
-import CullingFrustrum from "./renderer/culling-frustrum.mjs";
+import CullingFrustum from "./renderer/culling-frustum.mjs";
 import refitCanvas from "./util/refit-canvas.mjs";
 import Camera from "./components/camera.mjs";
 import { gl } from "./renderer/renderer.mjs";
@@ -15,6 +15,8 @@ import BatchGeometry from "./renderer/batch-geometry.mjs";
 import { parseObjFile } from "./util/obj-parser.mjs"
 import { generateContact } from "./physics/physics.mjs";
 import Transform from "./components/transform.mjs";
+
+var score = 0;
 
 /**
  * Debug mode can be used to specify alternative rendering methods for certain shaders
@@ -33,10 +35,10 @@ var torchIntensity = 1.0;
 var batchMesh;
 
 /** @type {Mesh} */
-var startMarkerMesh;
-
-/** @type {Mesh} */
 var endMarkerMesh;
+
+/** @type {Transform} */
+var endMarkerTransform;
 
 /** @type {Mesh} */
 var groundMesh;
@@ -53,7 +55,7 @@ var mazeLayout;
 /** @type {Array<BatchInstance>} */
 var mazeWalls;
 
-/** @type {CullingFrustrum} */
+/** @type {CullingFrustum} */
 var cullingFrustrum;
 
 /** @type {Camera} */
@@ -79,7 +81,7 @@ export async function createFloor() {
     gridMat.textureScale = [10.0, 10.0];
     gridMat.specularIntensity = 0.2;
     gridMat.ambientLightColor = [0.2, 0.2, 0.2];
-    gridMat.diffuseIntensity = 1.0;
+    gridMat.diffuseIntensity = 0.8;
     gridMat.fogRadius = 23.0;
 
     var transform = new Transform();
@@ -146,12 +148,21 @@ export function regenMaze() {
     var endPos = addVector(multVector(maze.endPosition, 2.0), [1.0, 0.0, 1.0]);
     // endPos[1] = 0.5;
 
-    setMarkerPosition(startMarkerMesh, startPos);
-    setMarkerPosition(endMarkerMesh, endPos);
+    setMarkerPosition(endMarkerMesh, endMarkerTransform, endPos);
 
     updateFloorMesh();
 
     cameraPosition = [startPos[0], 0, startPos[2]];
+
+    if (mazeLayout[startPos[2] + 1][startPos[0]] == ' ') {
+        yRot = 180.0;
+    } else if (mazeLayout[startPos[2] - 1][startPos[0]] == ' ') {
+        yRot = 0.0;
+    } else if (mazeLayout[startPos[2]][startPos[0] + 1] == ' ') {
+        yRot = -90.0;
+    } else if (mazeLayout[startPos[2]][startPos[0] - 2] == ' ') {
+        yRot = 90.0;
+    }
 }
 
 async function createMazeWallMesh() {
@@ -166,6 +177,7 @@ async function createMazeWallMesh() {
         mainCamera
     );
     testCubeMaterial.textureScale = [1.0, 1.0];
+    testCubeMaterial.diffuseIntensity = 1.0;
     testCubeMaterial.specularIntensity = 0.1;
     testCubeMaterial.ambientLightColor = [0.2, 0.4, 0.6];
     testCubeMaterial.fogRadius = 23.0;
@@ -183,27 +195,32 @@ async function createMazeWallMesh() {
 }
 
 async function createMarkerMesh(color) {
-    var cubeMeshHandler = generateCubeMesh();
-    // var cubeMeshHandler = parseObjFile(await fetch('assets/meshes/mazeWall.obj', {cache: "no-store"}).then(obj => obj.text()));
+    // var cubeMeshHandler = generateCubeMesh();
+    var cubeMeshHandler = parseObjFile(await fetch('assets/meshes/endThing.obj', {cache: "no-store"}).then(obj => obj.text()));
     
     var geo = new BasicGeometry(gl, cubeMeshHandler);
 
-    var mat = new BasicEmissionMaterial(
+    var mat = new BasicShadedMaterial(
         gl,
-        await GetBasicEmissionShaderProgram(gl),
+        await GetBasicShadedShaderProgram(gl),
         mainCamera
     );
     mat.color = color;
     mat.camera = mainCamera;
+    mat.ambientLightColor = [0.2, 0.4, 0.6];
+    mat.diffuseIntensity = 1.0;
+    mat.specularIntensity = 0.4;
 
     return new Mesh(geo, mat);
 }
 
-function setMarkerPosition(markerMesh, position) {
-    position[1] = 2.0;
+function setMarkerPosition(markerMesh, transform, position) {
+    position[1] = 0.0;
     var mat = markerMesh.material;
-    var transform = mat4.identity(mat4.create());
-    mat.mvMatrix = mat4.scale(mat4.translate(transform, position), [0.2, 5.0, 0.2]);
+
+    transform.position = position;
+
+    mat.mvMatrix = transform.matrix;
 }
 
 async function initMeshes() {
@@ -212,13 +229,14 @@ async function initMeshes() {
     batchMesh = await createMazeWallMesh();
     groundMesh = await createFloor();
 
-    startMarkerMesh = await createMarkerMesh([1.0, 0.3, 0.3, 1.0]);
     endMarkerMesh = await createMarkerMesh([0.3, 0.3, 1.0, 1.0]);
+    endMarkerTransform = new Transform();
+    endMarkerTransform.scale = [0.25, 0.25, 0.25];
 
     regenMaze();
     maze.print();
 
-    cullingFrustrum = new CullingFrustrum(mainCamera);
+    cullingFrustrum = new CullingFrustum(mainCamera);
 }
 
 // Per Frame
@@ -234,8 +252,15 @@ const physicsEnabled = true;
 const lockYMovement = true;
 
 var torchTheta = 0.0;
+var endMarkerTheta = 0.0;
 
 function tick(deltaT) {
+
+    if (0.5 > magnitudeVector(subtractVector(endMarkerTransform.position, mainCamera.position))) {
+        score++;
+        regenMaze();
+        setScoreUI(score);
+    }
     
     mainCamera.setRotation([xRot, yRot, 0.0]);
 
@@ -312,26 +337,51 @@ function tick(deltaT) {
 
     setCameraPositionUI(mainCamera.position);
 
+    const currentMarkerRotation = endMarkerTransform.rotation;
+    endMarkerTransform.rotation = [
+        currentMarkerRotation[0] + deltaT * 30.0,
+        currentMarkerRotation[1] + deltaT * 50.0,
+        currentMarkerRotation[2] + deltaT * 80.0
+    ];
+
+    endMarkerTheta += deltaT * 1.0;
+    const currentMarkerPosition = endMarkerTransform.position;
+    endMarkerTransform.position = [
+        currentMarkerPosition[0],
+        -0.2 + Math.sin(endMarkerTheta) * 0.1,
+        currentMarkerPosition[2]
+    ];
+
     lightTheta += deltaT * 0.5;
 }
 
 function draw() {
 
+    endMarkerMesh.material.mvMatrix = endMarkerTransform.matrix;
+
     batchMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
     groundMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
+    endMarkerMesh.material.lightDirection = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
+
     batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
         return cullingFrustrum.testBoundingSphere(x.position, Math.sqrt(3.0));
     });
-    batchMesh.material.pointLightPosition = batchMesh.material.camera.position;
-    groundMesh.material.pointLightPosition = batchMesh.material.camera.position;
+
+    const torchPosition = subtractVector(mainCamera.position, [0.0, 0.2, 0.0]);
+
+    batchMesh.material.pointLightPosition = torchPosition;
+    groundMesh.material.pointLightPosition = torchPosition;
+    endMarkerMesh.material.pointLightPosition = torchPosition;
 
     batchMesh.material.debugMode = debugMode;
     groundMesh.material.debugMode = debugMode;
+    endMarkerMesh.material.debugMode = debugMode;
 
     batchMesh.material.pointLightIntensity = torchIntensity;
     groundMesh.material.pointLightIntensity = torchIntensity;
+    endMarkerMesh.material.pointLightIntensity = torchIntensity;
 
-    drawScene([ batchMesh, startMarkerMesh, endMarkerMesh, groundMesh ]);
+    drawScene([ batchMesh, endMarkerMesh, groundMesh ]);
 }
 
 var lastFrame = Date.now();
@@ -365,6 +415,9 @@ function setupEvents() {
 async function startGame() {
     setupEvents();
     await initMeshes();
+
+    setScoreUI(score);
+
     Frames();
 }
 
@@ -432,6 +485,10 @@ function setIsColliding(isColliding) {
     document.getElementById("iscol").style.backgroundColor = isColliding ? "#34e363" : "#e33434";
 }
 
+function setScoreUI(score) {
+    document.getElementById("score").innerHTML = "Score<br />" + score;
+}
+
 function setupDebugDropdown() {
     var select = document.getElementById("debug-select")
     select.addEventListener("change", (e) => {
@@ -439,7 +496,7 @@ function setupDebugDropdown() {
     });
 
     var options = [
-        "textured", "depth", "normals"
+        "textured", "depth", "normals", "no direct"
     ];
     for (var i = 0; i < options.length; i++) {
         var option = document.createElement("option");

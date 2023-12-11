@@ -6,7 +6,7 @@ body {
 }
 
 #canvas-container {
-    position: absolute;
+    position: fixed;
     top: 0pt;
     bottom: 0pt;
     left: 0pt;
@@ -91,4 +91,19 @@ p {
 
 #instructions {
     margin-top: 10pt;
+}
+
+h1#score {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #000000a2;
+    padding: 10pt;
+    border-radius: 5pt;
+
+    font-size: medium;
+    text-align: center;
+
+    position: fixed;
+    top: 10pt;
+    left: 50%;
+    transform: translateX(-50%);
 }

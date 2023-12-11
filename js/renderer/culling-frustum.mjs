@@ -5,7 +5,7 @@
 import Camera from "../components/camera.mjs";
 import { generateMaze } from "../util/maze-gen.mjs";
 
-export class CullingFrustrum {
+export class CullingFrustum {
 
     /**
      * 
@@ -16,14 +16,14 @@ export class CullingFrustrum {
     }
 
     /**
-     * Test if a bounding sphere in contained within the camera's frustrum.
+     * Test if a bounding sphere in contained within the camera's frustum.
      * 
      * @param {Array<Number>} center Vec3 defining center of bounding sphere.
      * @param {Number} radius Radius of the bounding sphere.
-     * @returns {Boolean} Whether or not the sphere in contained in the camera's frustrum.
+     * @returns {Boolean} Whether or not the sphere in contained in the camera's frustum.
      */
     testBoundingSphere(center, radius) {
-        var planes = this.camera.getFrustrumPlanes();
+        var planes = this.camera.getFrustumPlanes();
         var res = true;
         for (var i = 0; i < planes.length && res; i++) {
             res = planes[i].dotProduct(center) > -radius;
@@ -34,7 +34,7 @@ export class CullingFrustrum {
     }
 }
 
-export function testCullingFrustrum() {
+export function testCullingFrustum() {
     var cam = new Camera(0.1, 5, 45, 16.0 / 9.0);
     console.log(cam.forward.map(x => x.toFixed(2)));
     var maze = generateMaze(20, 20, 0.1);
@@ -42,10 +42,10 @@ export function testCullingFrustrum() {
     // cam.setRotation([0.0, 60.0, 0.0]);
     cam.setPosition([0.0, 0.0, 0.0]);
     // cam.setPosition(maze.startPosition);
-    var cullFrus = new CullingFrustrum(cam);
+    var cullFrus = new CullingFrustum(cam);
 
-    cam.getFrustrumPlanes().forEach(x => x.printEquation());
-    console.log(cam.getFrustrumPlanes()[0].point);
+    cam.getFrustumPlanes().forEach(x => x.printEquation());
+    console.log(cam.getFrustumPlanes()[0].point);
 
     var layout = maze.getArrayLayout();
     
@@ -68,4 +68,4 @@ export function testCullingFrustrum() {
     console.log(layout.map(x => x.join('')).join('\n'));
 }
 
-export default CullingFrustrum;
+export default CullingFrustum;

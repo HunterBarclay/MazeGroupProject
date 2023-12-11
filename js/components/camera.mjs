@@ -20,7 +20,7 @@ class Camera {
     clean() {
         if (this.isDirty) {
             this.genTransformation();
-            this.genFrustrumPlanes();
+            this.genFrustumPlanes();
             this.genProjection();
             this.isDirty = false;
         }
@@ -62,12 +62,12 @@ class Camera {
     }
 
     /**
-     * @returns {Array<Plane>} Planes of the frustrum:
+     * @returns {Array<Plane>} Planes of the frustum:
      * [ near, far, left, right, top, bottom ]
      */
-    getFrustrumPlanes() {
+    getFrustumPlanes() {
         this.clean();
-        return this.frustrumPlanes;
+        return this.frustumPlanes;
     }
 
     genTransformation() {
@@ -79,12 +79,12 @@ class Camera {
         // this.projection = mat4.inverse(this.projection);
     }
 
-    genFrustrumPlanes() {
+    genFrustumPlanes() {
         const halfVSide = this.farZ * Math.tan((this.fovY / 180.0 * 3.1415) / 2.0);
         const halfHSide = halfVSide * this.aspect;
         const frontMultFar = multVector(this.forward, this.farZ);
 
-        this.frustrumPlanes = [
+        this.frustumPlanes = [
             new Plane( // Near
                 addVector(this.position, multVector(this.forward, this.nearZ)),
                 this.forward
@@ -128,7 +128,7 @@ class Camera {
 export function testCamera() {
     var cam = new Camera(1, 10, 45, 16.0 / 9.0);
     cam.setRotation([-30.0, 0.0, 0.0]);
-    var frustrum = cam.getFrustrumPlanes();
+    var frustrum = cam.getFrustumPlanes();
     for (var plane of frustrum) {
         plane.print();
     }
