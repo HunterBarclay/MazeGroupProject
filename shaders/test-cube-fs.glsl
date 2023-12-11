@@ -61,9 +61,9 @@ void main(void) {
 
     vec3 pointDir = vFragPosWorld - uPointLightPosition;
     vec3 pointCol = vec3(1.0, 0.7, 0.2);
-    float pointRadius = 3.0;
+    float pointRadius = 5.0;
     float pointIntensity = max(uPointLightIntensity * (pointRadius - length(pointDir)), 0.0) / pointRadius;
-    pointIntensity = pow(pointIntensity, 4.0);
+    pointIntensity = pow(pointIntensity, 2.0);
 
     float diffusePoint = calculateDiffuseLight(normalize(pointDir), normal);
     float specularPoint = calculateSpecularLight(shininess, normalize(pointDir), normal);

@@ -107,3 +107,18 @@ h1#score {
     left: 50%;
     transform: translateX(-50%);
 }
+
+h1#dist {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #000000a2;
+    padding: 10pt;
+    border-radius: 5pt;
+
+    font-size: medium;
+    text-align: center;
+
+    position: fixed;
+    bottom: 10pt;
+    left: 50%;
+    transform: translateX(-50%);
+}

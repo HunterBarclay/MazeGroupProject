@@ -63,6 +63,8 @@ var mainCamera;
 
 var cameraPosition;
 
+var currentMazeRating = 0;
+
 // Initialization
 
 export async function createFloor() {
@@ -163,6 +165,8 @@ export function regenMaze() {
     } else if (mazeLayout[startPos[2]][startPos[0] - 2] == ' ') {
         yRot = 90.0;
     }
+
+    currentMazeRating = mazeDifficulty * mazeSize;
 }
 
 async function createMazeWallMesh() {
@@ -257,10 +261,14 @@ var endMarkerTheta = 0.0;
 function tick(deltaT) {
 
     if (0.5 > magnitudeVector(subtractVector(endMarkerTransform.position, mainCamera.position))) {
-        score++;
+        score += currentMazeRating;
         regenMaze();
-        setScoreUI(score);
+        setScoreUI(score.toFixed(1));
     }
+
+    yRot += ((keys['arrowleft'] ? 1 : 0) - (keys['arrowright'] ? 1 : 0)) * deltaT * 130.0;
+    xRot += ((keys['arrowup'] ? 1 : 0) - (keys['arrowdown'] ? 1 : 0)) * deltaT * 60.0;
+    xRot = Math.max(-85.0, Math.min(85.0, xRot));
     
     mainCamera.setRotation([xRot, yRot, 0.0]);
 
@@ -352,6 +360,10 @@ function tick(deltaT) {
         currentMarkerPosition[2]
     ];
 
+    var distToEnd = subtractVector(endMarkerTransform.position, cameraPosition);
+    distToEnd[1] = 0.0;
+    setDistanceUI(magnitudeVector(distToEnd).toFixed(1));
+
     lightTheta += deltaT * 0.5;
 }
 
@@ -429,7 +441,10 @@ var keys = {
     'w': false,
     's': false,
     'a': false,
-    'd': false
+    'd': false,
+    'shift': false,
+    'arrowleft': false,
+    'arrowright': false
 };
 
 function onMouseDown(event) {
@@ -487,6 +502,10 @@ function setIsColliding(isColliding) {
 
 function setScoreUI(score) {
     document.getElementById("score").innerHTML = "Score<br />" + score;
+}
+
+function setDistanceUI(distance) {
+    document.getElementById("dist").innerHTML = "Distance<br />" + distance + " m";
 }
 
 function setupDebugDropdown() {
