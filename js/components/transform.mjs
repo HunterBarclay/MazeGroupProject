@@ -60,16 +60,16 @@ class Transform {
 
         mat4.identity(this.matrix);
 
-        // Scale
-        mat4.scale(this.matrix, this.#_scale);
+        // Translation
+        mat4.translate(this.matrix, this.#_position);
 
         // Rotation
         mat4.rotateY(this.matrix, this.#_rotation[1] / 180.0 * 3.1415);
         mat4.rotateX(this.matrix, this.#_rotation[0] / 180.0 * 3.1415);
         mat4.rotateZ(this.matrix, this.#_rotation[2] / 180.0 * 3.1415);
 
-        // Translation
-        mat4.translate(this.matrix, this.#_position);
+        // Scale
+        mat4.scale(this.matrix, this.#_scale);
     }
 }
 

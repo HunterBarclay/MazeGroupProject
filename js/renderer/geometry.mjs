@@ -36,13 +36,12 @@ export class Geometry {
     draw(gl) {
         console.error("Must be overriden");
     }
-    
 }
 
 export class BasicGeometry extends Geometry {
 
     /** @type {MeshHandler} */
-    meshHandler;
+    meshHandler = null;
 
     /**
      * Constructs a new Geometry object
@@ -53,6 +52,19 @@ export class BasicGeometry extends Geometry {
     constructor(gl, meshHandler) {
         super(gl);
 
+        this.updateMeshHandler(gl, meshHandler);
+    }
+
+    /**
+     * Draws the index buffer with provided other buffers
+     * 
+     * @param {WebGLRenderingContext} gl Rendering Context
+     */
+    draw(gl) {
+        gl.drawElements(gl.TRIANGLES, this.meshHandler.indexArray.length, gl.UNSIGNED_INT, 0);
+    }
+
+    updateMeshHandler(gl, meshHandler) {
         this.meshHandler = meshHandler;
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
@@ -63,14 +75,5 @@ export class BasicGeometry extends Geometry {
         gl.bufferData(gl.ARRAY_BUFFER, meshHandler.texCoordArray, gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, meshHandler.indexArray, gl.DYNAMIC_DRAW);
-    }
-
-    /**
-     * Draws the index buffer with provided other buffers
-     * 
-     * @param {WebGLRenderingContext} gl Rendering Context
-     */
-    draw(gl) {
-        gl.drawElements(gl.TRIANGLES, this.meshHandler.indexArray.length, gl.UNSIGNED_INT, 0);
     }
 }

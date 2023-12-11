@@ -21,8 +21,10 @@ uniform float uDiffuseIntensity;
 uniform vec3 uAmbientLightColor;
 uniform float uFogRadius;
 uniform float uFogFalloff;
+uniform float uDebugMode;
 
 uniform vec3 uPointLightPosition;
+uniform float uPointLightIntensity;
 
 float calculateDiffuseLight(vec3 lightDir, vec3 normal) {
     return uDiffuseIntensity * max(dot(normal, -lightDir), 0.0);
@@ -58,11 +60,10 @@ void main(void) {
     // gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 
     vec3 pointDir = vFragPosWorld - uPointLightPosition;
-    vec3 pointCol = vec3(0.7, 1.0, 1.0);
+    vec3 pointCol = vec3(1.0, 0.7, 0.2);
     float pointRadius = 3.0;
-    float pointCoef = 1.5;
-    float pointIntensity = max(pointCoef * (pointRadius - length(pointDir)), 0.0) / pointRadius;
-    pointIntensity = pow(pointIntensity, 2.0);
+    float pointIntensity = max(uPointLightIntensity * (pointRadius - length(pointDir)), 0.0) / pointRadius;
+    pointIntensity = pow(pointIntensity, 4.0);
 
     float diffusePoint = calculateDiffuseLight(normalize(pointDir), normal);
     float specularPoint = calculateSpecularLight(shininess, normalize(pointDir), normal);
@@ -73,13 +74,18 @@ void main(void) {
     // TEST COLORS
     // gl_FragColor = vec4(shininess, shininess, shininess, 1.0);
     // gl_FragColor = vec4(ambientOcc, ambientOcc, ambientOcc, 1.0);
-    // gl_FragColor = vec4(normal / 2.0 + 0.5, 1.0);
+    if (abs(uDebugMode - 2.0) < 0.001) {
+        gl_FragColor = vec4(normal / 2.0 + 0.5, 1.0);
+    }
     // gl_FragColor = vec4(vTextureCoord, 0.0, 1.0);
     // gl_FragColor = vec4(biTangent, 1.0);
     // gl_FragColor = vec4(vNormTheta / 3.14159, vNormTheta / 3.14159, vNormTheta / 3.14159, 1.0);
 
     float depth = min(1.0, max(0.0, length(vFragPos) / uFogRadius));
-    // gl_FragColor = vec4(depth, depth, depth, 1.0);
+    if (abs(uDebugMode - 1.0) < 0.001) {
+        float styleDepth = pow(1.0 - depth, 5.0);
+        gl_FragColor = vec4(styleDepth, styleDepth, styleDepth, 1.0);
+    }
 
     float fogX = (depth - uFogFalloff) * (1.0 / (1.0 - uFogFalloff));
 

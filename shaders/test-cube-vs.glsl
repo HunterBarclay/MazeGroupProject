@@ -6,6 +6,7 @@ uniform mat4 uMVMatrix;
 uniform mat4 uVMatrix;
 uniform mat4 uPMatrix;
 uniform vec3 uDirLight;
+uniform float uDebugMode;
 
 varying vec2 vTextureCoord;
 varying vec3 vNormal;
@@ -71,8 +72,8 @@ void main(void) {
     vec4 biTangent = rotateAroundY(rotateAroundX(vec4(0.0, 1.0, 0.0, 1.0), normalPhi), normalTheta);
     vec3 tangent = cross(biTangent.xyz, aVertexNormal);
 
-    vNormal = (rotMat * vec4(aVertexNormal, 1.0)).xyz;
-    vTangent = (rotMat * vec4(tangent, 1.0)).xyz;
+    vNormal = normalize((rotMat * vec4(aVertexNormal, 1.0)).xyz);
+    vTangent = normalize((rotMat * vec4(tangent, 1.0)).xyz);
     // vNormal = aVertexNormal;
     // vTangent = tangent;
 }

@@ -4,7 +4,7 @@ import { drawScene, loadTexture } from "./renderer/renderer.mjs";
 import BatchInstance from "./renderer/batch-instance.mjs";
 import { GetBasicEmissionShaderProgram, GetFullTextureShaderProgram, BasicEmissionMaterial, TestCubeMaterial } from "./renderer/materials.mjs";
 import { mat4 } from "./util/glMatrix_util.mjs";
-import { addVector, dotProductVector, generateCubeMesh, magnitudeVector, multVector, normalizeVector, subtractVector } from "./renderer/mesh-handler.mjs";
+import { addVector, dotProductVector, generateCubeMesh, generateGridMesh, magnitudeVector, multVector, normalizeVector, subtractVector } from "./renderer/mesh-handler.mjs";
 import CullingFrustrum from "./renderer/culling-frustrum.mjs";
 import refitCanvas from "./util/refit-canvas.mjs";
 import Camera from "./components/camera.mjs";
@@ -14,6 +14,20 @@ import { BasicGeometry } from "./renderer/geometry.mjs";
 import BatchGeometry from "./renderer/batch-geometry.mjs";
 import { parseObjFile } from "./util/obj-parser.mjs"
 import { generateContact } from "./physics/physics.mjs";
+import Transform from "./components/transform.mjs";
+
+/**
+ * Debug mode can be used to specify alternative rendering methods for certain shaders
+ * 
+ * 0 - Textured Color
+ * 1 - Depth Color
+ * 2 - Normals Color
+ * 
+ * @type {Number}
+ */
+var debugMode = 0;
+
+var torchIntensity = 1.0;
 
 /** @type {Mesh} */
 var batchMesh;
@@ -23,6 +37,12 @@ var startMarkerMesh;
 
 /** @type {Mesh} */
 var endMarkerMesh;
+
+/** @type {Mesh} */
+var groundMesh;
+
+var mazeSize = 10;
+var mazeDifficulty = 0.5;
 
 /** @type {Maze} */
 var maze;
@@ -43,9 +63,70 @@ var cameraPosition;
 
 // Initialization
 
-export function regenMaze(width, height, difficulty) {
+export async function createFloor() {
+
+    const maxHeight = 0.02;
+
+    noise.seed(Date.now());
+    var gridMeshHandler = generateCubeMesh();
+    var gridGeo = new BasicGeometry(gl, gridMeshHandler);
+
+    var gridMat = new TestCubeMaterial(
+        gl,
+        await GetFullTextureShaderProgram(gl),
+        mainCamera
+    );
+    gridMat.textureScale = [10.0, 10.0];
+    gridMat.specularIntensity = 0.2;
+    gridMat.ambientLightColor = [0.2, 0.2, 0.2];
+    gridMat.diffuseIntensity = 1.0;
+    gridMat.fogRadius = 23.0;
+
+    var transform = new Transform();
+    transform.position = [0.0, -0.5, 0.0];
+    // transform.scale = [10.0, 10.0, 10.0];
+
+    gridMat.mvMatrix = transform.matrix;
+
+    var mesh = new Mesh(gridGeo, gridMat);
+
+    mesh.material.baseTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_basecolor.jpg");
+    mesh.material.normalTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_normal.jpg");
+    mesh.material.ambientOcclusionTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_ambientOcclusion.jpg");
+    mesh.material.roughnessTexture = loadTexture("./assets/textures/ground-dirt/Ground_Dirt_007_roughness.jpg");
+
+    return mesh;
+}
+
+export function updateFloorMesh() {
+    var mapVertFunc = (x, gridSize) => {
+        return x * ((mazeLayout.length - 1) / (gridSize - 1));
+    };
+
+    var mapTexCoordFunc = (x, gridSize) => {
+        return x * (1.0 / (gridSize - 1));
+    };
+
+    const maxHeight = 0.03;
+    var heightFunc = (x, z) => {
+        return maxHeight * (noise.simplex2(x * mazeLayout.length * 5.0, z * mazeLayout.length * 5.0) + 1.0) / 2.0;
+    };
+    
+    var gridMeshHandler = generateGridMesh(
+        true,
+        heightFunc,
+        mapVertFunc,
+        mapTexCoordFunc,
+        16 * mazeLayout.length
+    );
+
+    groundMesh.geometry.updateMeshHandler(gl, gridMeshHandler);
+    groundMesh.material.textureScale = [1.0 * mazeLayout.length, 1.0 * mazeLayout.length];
+}
+
+export function regenMaze() {
     mazeWalls = [];
-    maze = generateMaze(width, height, difficulty);
+    maze = generateMaze(mazeSize, mazeSize, mazeDifficulty);
     mazeLayout = maze.getArrayLayout();
 
     for (var z = 0; z < mazeLayout.length; z++) {
@@ -68,6 +149,8 @@ export function regenMaze(width, height, difficulty) {
     setMarkerPosition(startMarkerMesh, startPos);
     setMarkerPosition(endMarkerMesh, endPos);
 
+    updateFloorMesh();
+
     cameraPosition = [startPos[0], 0, startPos[2]];
 }
 
@@ -85,7 +168,7 @@ async function createMazeWallMesh() {
     testCubeMaterial.textureScale = [1.0, 1.0];
     testCubeMaterial.specularIntensity = 0.1;
     testCubeMaterial.ambientLightColor = [0.2, 0.4, 0.6];
-    testCubeMaterial.fogRadius = 135.0;
+    testCubeMaterial.fogRadius = 23.0;
 
     testCubeMaterial.mvMatrix = mat4.identity(mat4.create());
 
@@ -124,14 +207,15 @@ function setMarkerPosition(markerMesh, position) {
 }
 
 async function initMeshes() {
-    mainCamera = new Camera(0.01, 140, 45, gl.viewportWidth / gl.viewportHeight);
+    mainCamera = new Camera(0.01, 25, 45, gl.viewportWidth / gl.viewportHeight);
 
     batchMesh = await createMazeWallMesh();
+    groundMesh = await createFloor();
 
     startMarkerMesh = await createMarkerMesh([1.0, 0.3, 0.3, 1.0]);
     endMarkerMesh = await createMarkerMesh([0.3, 0.3, 1.0, 1.0]);
 
-    regenMaze(10, 10, 0.7);
+    regenMaze();
     maze.print();
 
     cullingFrustrum = new CullingFrustrum(mainCamera);
@@ -146,6 +230,11 @@ var lightTheta = 0.0;
 const cameraSpeed = 2.2;
 const cameraSprintSpeed = 4.0;
 
+const physicsEnabled = true;
+const lockYMovement = true;
+
+var torchTheta = 0.0;
+
 function tick(deltaT) {
     
     mainCamera.setRotation([xRot, yRot, 0.0]);
@@ -157,51 +246,56 @@ function tick(deltaT) {
     if (magnitudeVector(movement) > 1.0) {
         movement = normalizeVector(movement);
     }
-    movement[1] = 0.0;
+
+    if (lockYMovement) {
+        movement[1] = 0.0;
+    }
 
     var cameraDelta = multVector(movement, deltaT * (keys['shift'] ? cameraSprintSpeed : cameraSpeed));
     var projectedPosition = [cameraPosition[0] + cameraDelta[0], cameraPosition[2] + cameraDelta[2]];
     var layoutIndex = [Math.round(projectedPosition[0]), Math.round(projectedPosition[1])];
 
-    var contactNormals = [];
+    if (physicsEnabled) {
+        var contactNormals = [];
 
-    if (cameraPosition[1] + cameraDelta[1] < 1.0) {
-        for (var z = layoutIndex[1] - 1; z < layoutIndex[1] + 2; z++) {
-            for (var x = layoutIndex[0] - 1; x < layoutIndex[0] + 2; x++) {
-                if (z >= 0 && z < mazeLayout.length && x >= 0 && mazeLayout[z].length) {
-                    if (mazeLayout[z][x] == 'X') {
-                        var norm = generateContact(
-                            projectedPosition,
-                            0.08,
-                            [x, z],
-                            0.5
-                        );
+        if (cameraPosition[1] + cameraDelta[1] < 1.0) {
+            for (var z = layoutIndex[1] - 1; z < layoutIndex[1] + 2; z++) {
+                for (var x = layoutIndex[0] - 1; x < layoutIndex[0] + 2; x++) {
+                    if (z >= 0 && z < mazeLayout.length && x >= 0 && mazeLayout[z].length) {
+                        if (mazeLayout[z][x] == 'X') {
+                            var norm = generateContact(
+                                projectedPosition,
+                                0.08,
+                                [x, z],
+                                0.5
+                            );
 
-                        if (norm != null && magnitudeVector(norm) > 0.0001) {
-                            contactNormals.push(norm);
-                            // console.log(norm);
+                            if (norm != null && magnitudeVector(norm) > 0.0001) {
+                                contactNormals.push(norm);
+                                // console.log(norm);
+                            }
                         }
                     }
                 }
             }
         }
-    }
-    
-    setIsColliding(contactNormals.length != 0);
+        
+        setIsColliding(contactNormals.length != 0);
 
-    if (contactNormals.length > 0) {
-        var maxContact = [0.0, 0.0, 0.0];
-        for (var i = 0; i < contactNormals.length; i++) {
-            if (Math.abs(maxContact[0]) < Math.abs(contactNormals[i][0])) {
-                maxContact[0] = contactNormals[i][0];
+        if (contactNormals.length > 0) {
+            var maxContact = [0.0, 0.0, 0.0];
+            for (var i = 0; i < contactNormals.length; i++) {
+                if (Math.abs(maxContact[0]) < Math.abs(contactNormals[i][0])) {
+                    maxContact[0] = contactNormals[i][0];
+                }
+                if (Math.abs(maxContact[2]) < Math.abs(contactNormals[i][2])) {
+                    maxContact[2] = contactNormals[i][2];
+                }
             }
-            if (Math.abs(maxContact[2]) < Math.abs(contactNormals[i][2])) {
-                maxContact[2] = contactNormals[i][2];
-            }
+
+            var diff = maxContact;
+            cameraDelta = subtractVector(cameraDelta, diff);
         }
-
-        var diff = maxContact;
-        cameraDelta = subtractVector(cameraDelta, diff);
     }
 
     // if (collisionNormal) {
@@ -213,22 +307,31 @@ function tick(deltaT) {
 
     mainCamera.setPosition(cameraPosition);
 
-    
+    torchTheta += deltaT * 0.8;
+    torchIntensity = noise.simplex2(torchTheta, 2.0 * torchTheta) * 0.1 + 1.0;
 
     setCameraPositionUI(mainCamera.position);
 
-    lightTheta += deltaT * 1.0;
+    lightTheta += deltaT * 0.5;
 }
 
 function draw() {
 
-    batchMesh.material.directionalLight = [Math.cos(lightTheta), -7.0, Math.sin(lightTheta)];
+    batchMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
+    groundMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
     batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
         return cullingFrustrum.testBoundingSphere(x.position, Math.sqrt(3.0));
     });
     batchMesh.material.pointLightPosition = batchMesh.material.camera.position;
+    groundMesh.material.pointLightPosition = batchMesh.material.camera.position;
 
-    drawScene([ batchMesh, startMarkerMesh, endMarkerMesh ]);
+    batchMesh.material.debugMode = debugMode;
+    groundMesh.material.debugMode = debugMode;
+
+    batchMesh.material.pointLightIntensity = torchIntensity;
+    groundMesh.material.pointLightIntensity = torchIntensity;
+
+    drawScene([ batchMesh, startMarkerMesh, endMarkerMesh, groundMesh ]);
 }
 
 var lastFrame = Date.now();
@@ -245,13 +348,18 @@ function Frames() {
 
 function setupEvents() {
     // Input
-    document.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mouseup", onMouseUp);
-    document.addEventListener("mousemove", onMouseMove);
+    var canvas = document.getElementById("hellowebgl");
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mousemove", onMouseMove);
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keyup", onKeyUp);
 
-    document.getElementById("regen-button").addEventListener("click", (e) => regenMaze(10, 10, 0.7));
+    document.getElementById("regen-button").addEventListener("click", (e) => regenMaze());
+
+    setupDebugDropdown();
+    setupMazeGenSliders();
 }
 
 async function startGame() {
@@ -322,6 +430,36 @@ export function setCameraPositionUI(pos) {
 
 function setIsColliding(isColliding) {
     document.getElementById("iscol").style.backgroundColor = isColliding ? "#34e363" : "#e33434";
+}
+
+function setupDebugDropdown() {
+    var select = document.getElementById("debug-select")
+    select.addEventListener("change", (e) => {
+        debugMode = e.target.value;
+    });
+
+    var options = [
+        "textured", "depth", "normals"
+    ];
+    for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = i;
+        option.innerHTML = options[i];
+        select.appendChild(option);
+    }
+}
+
+function setupMazeGenSliders() {
+    var sizeElem = document.getElementById("maze-size");
+    sizeElem.addEventListener("change", (e) => {
+        mazeSize = e.target.value;
+    });
+    sizeElem.value = mazeSize;
+    var diffElem = document.getElementById("maze-diff");
+    diffElem.addEventListener("change", (e) => {
+        mazeDifficulty = e.target.value;
+    });
+    diffElem.value = mazeDifficulty;
 }
 
 export default startGame;

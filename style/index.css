@@ -31,6 +31,11 @@ p {
 
     width: fit-content;
     height: fit-content;
+
+    background-color: #000000a2;
+
+    padding: 10pt;
+    border-radius: 5pt;
 }
 
 #regen-button {
@@ -54,4 +59,36 @@ p {
     width: 80pt;
     height: 20pt;
     border-radius: 5pt;
+}
+
+#debug-select {
+    position: fixed;
+    right: 10pt;
+    top: 10pt;
+
+    border: none;
+    background-color: #72a5f7;
+    color: rgb(22, 22, 22);
+    padding: 10pt 20pt;
+    border-radius: 5pt;
+
+    font-family: 'Montserrat', sans-serif;
+}
+
+#sliders {
+    position: fixed;
+    left: 10pt;
+    bottom: 10pt;
+    
+    display: flex;
+    flex-direction: column;
+
+    background-color: #000000a2;
+
+    padding: 10pt;
+    border-radius: 5pt;
+}
+
+#instructions {
+    margin-top: 10pt;
 }
