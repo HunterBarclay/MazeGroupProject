@@ -515,7 +515,7 @@ function setupDebugDropdown() {
     });
 
     var options = [
-        "textured", "depth", "normals", "no direct"
+        ".textured", ".depth", ".normals", ".no direct"
     ];
     for (var i = 0; i < options.length; i++) {
         var option = document.createElement("option");
