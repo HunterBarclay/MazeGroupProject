@@ -63,6 +63,9 @@ var mainCamera;
 
 var cameraPosition;
 
+/** @type{Mesh} */
+var axeMesh;
+
 var currentMazeRating = 0;
 
 // Initialization
@@ -218,6 +221,34 @@ async function createMarkerMesh(color) {
     return new Mesh(geo, mat);
 }
 
+async function createAxeMesh() {
+    var axeMeshHandler = parseObjFile(await fetch('assets/meshes/axe.obj', {cache: "no-store"}).then(obj => obj.text()));
+
+    var geo = new BasicGeometry(gl, axeMeshHandler);
+
+    var mat = new TestCubeMaterial(
+        gl,
+        await GetFullTextureShaderProgram(gl),
+        mainCamera
+    );
+    mat.textureScale = [1.0, 1.0];
+    mat.diffuseIntensity = 1.0;
+    mat.specularIntensity = 0.0;
+    mat.ambientLightColor = [0.2, 0.4, 0.6];
+    mat.fogRadius = 23.0;
+
+    mat.mvMatrix = mat4.identity(mat4.create());
+
+    var mesh = new Mesh(geo, mat);
+
+    mesh.material.baseTexture = loadTexture("./assets/textures/axe/base.png");
+    mesh.material.normalTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_normal.jpg");
+    mesh.material.ambientOcclusionTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_ambientOcclusion.jpg");
+    mesh.material.roughnessTexture = loadTexture("./assets/textures/style-grass/Stylized_Grass_002_roughness.jpg");
+
+    return mesh;
+}
+
 function setMarkerPosition(markerMesh, transform, position) {
     position[1] = 0.0;
     var mat = markerMesh.material;
@@ -237,6 +268,8 @@ async function initMeshes() {
     endMarkerTransform = new Transform();
     endMarkerTransform.scale = [0.25, 0.25, 0.25];
 
+    axeMesh = await createAxeMesh();
+
     regenMaze();
     maze.print();
 
@@ -252,8 +285,8 @@ var lightTheta = 0.0;
 const cameraSpeed = 2.2;
 const cameraSprintSpeed = 4.0;
 
-const physicsEnabled = true;
-const lockYMovement = true;
+const physicsEnabled = false;
+const lockYMovement = false;
 
 var torchTheta = 0.0;
 var endMarkerTheta = 0.0;
@@ -371,9 +404,12 @@ function draw() {
 
     endMarkerMesh.material.mvMatrix = endMarkerTransform.matrix;
 
-    batchMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
-    groundMesh.material.directionalLight = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
-    endMarkerMesh.material.lightDirection = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
+    const lightVec = [Math.cos(lightTheta), -3.0, Math.sin(lightTheta)];
+
+    batchMesh.material.directionalLight = lightVec;
+    groundMesh.material.directionalLight = lightVec;
+    endMarkerMesh.material.lightDirection = lightVec;
+    axeMesh.material.directionalLight = lightVec;
 
     batchMesh.geometry.batchInstances = mazeWalls.filter(x => {
         return cullingFrustrum.testBoundingSphere(x.position, Math.sqrt(3.0));
@@ -384,16 +420,19 @@ function draw() {
     batchMesh.material.pointLightPosition = torchPosition;
     groundMesh.material.pointLightPosition = torchPosition;
     endMarkerMesh.material.pointLightPosition = torchPosition;
+    axeMesh.material.directionalLight = lightVec;
 
     batchMesh.material.debugMode = debugMode;
     groundMesh.material.debugMode = debugMode;
     endMarkerMesh.material.debugMode = debugMode;
+    axeMesh.material.debugMode = debugMode;
 
     batchMesh.material.pointLightIntensity = torchIntensity;
     groundMesh.material.pointLightIntensity = torchIntensity;
     endMarkerMesh.material.pointLightIntensity = torchIntensity;
+    axeMesh.material.pointLightIntensity = torchIntensity;
 
-    drawScene([ batchMesh, endMarkerMesh, groundMesh ]);
+    drawScene([ batchMesh, endMarkerMesh, groundMesh, axeMesh ]);
 }
 
 var lastFrame = Date.now();
