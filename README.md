@@ -3,6 +3,8 @@ This is a group project for CS464. Team is Hunter Barclay, Josh Martin, Jordan C
 
 ## Usage
 
+Following on-screen instructions in the top-left for controls.
+
 ### GitHub Pages
 The project's `main` branch is hosted with GitHub pages [here](https://kyrovibe.github.io/MazeGroupProject/).
 
@@ -68,6 +70,25 @@ The *draw* method utilizes the loaded instances to perform draw calls efficientl
 
 #### Frustrum Culling
 With making use of batch rendering, we'll be using frustrum culling to determine which parts of the maze can actually be seen by the user and only render those. This will cut down on the number of objects we need to render considerably.
+
+## Contributing
+### Non-JS Files
+- [`index.html`](/index.html) -> Main HTML file that has all basic DOM elements.
+- [`index.css`](/style/index.css) -> Main styling for the DOM elements.
+- [Shaders](/shaders/) -> This folder contains all our GLSL shader files.
+### Core Scripts
+- [`app.mjs`](/js/app.mjs) is one of the only scripts that is added to the `index.html` file.
+- [`game.mjs`](/js/game.mjs) contains all the main game glue and logic.
+### Components
+These scripts have classes that are multipurpose.
+### Physics
+These scripts have logic and classes ment for calculating and handling the limited about of physics.
+### Renderer
+These scripts are all used to interact with WebGL and draw to the canvas DOM element, as well as manage any render specific data.
+### Util
+These scripts serve as stateless utility classes used for calculation.
+### Vendor
+This folder contains any third party libraries we may use. Currently only contains NoiseJS *See Below*.
 
 ## Assets
 ### Meshes
