@@ -38,7 +38,7 @@ p {
     border-radius: 5pt;
 }
 
-#regen-button {
+/* #regen-button {
     font-family: 'Montserrat', sans-serif;
 
     border: none;
@@ -50,6 +50,39 @@ p {
     position: fixed;
     right: 10pt;
     bottom: 10pt;
+
+    text-anchor: middle;
+    text-align: center;
+} */
+
+#action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10pt;
+
+    position: fixed;
+    right: 10pt;
+    bottom: 10pt;
+
+    width: fit-content;
+    height: fit-content;
+
+    background-color: #000000a2;
+
+    padding: 10pt;
+    border-radius: 5pt;
+}
+
+#action-buttons button {
+    font-family: 'Montserrat', sans-serif;
+
+    height: 40pt;
+
+    border: none;
+    background-color: #72a5f7;
+    color: rgb(22, 22, 22);
+    padding: 10pt 20pt;
+    border-radius: 5pt;
 
     text-anchor: middle;
     text-align: center;
