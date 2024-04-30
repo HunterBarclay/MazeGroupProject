@@ -228,7 +228,7 @@ function setMarkerPosition(markerMesh, transform, position) {
 }
 
 async function initMeshes() {
-    mainCamera = new Camera(0.01, 25, 45, gl.viewportWidth / gl.viewportHeight);
+    mainCamera = new Camera(0.01, 25, 70, gl.viewportWidth / gl.viewportHeight);
 
     batchMesh = await createMazeWallMesh();
     groundMesh = await createFloor();
@@ -253,7 +253,7 @@ const cameraSpeed = 2.2;
 const cameraSprintSpeed = 4.0;
 
 const physicsEnabled = true;
-const lockYMovement = true;
+let lockYMovement = true;
 
 var torchTheta = 0.0;
 var endMarkerTheta = 0.0;
@@ -419,6 +419,7 @@ function setupEvents() {
     document.addEventListener("keyup", onKeyUp);
 
     document.getElementById("regen-button").addEventListener("click", (e) => regenMaze());
+    document.getElementById("toggle-y-lock").addEventListener("click", (e) => toggleYLock(e));
 
     setupDebugDropdown();
     setupMazeGenSliders();
@@ -506,6 +507,19 @@ function setScoreUI(score) {
 
 function setDistanceUI(distance) {
     document.getElementById("dist").innerHTML = "Distance<br />" + distance + " m";
+}
+
+/**
+ * @param {PointerEvent} e 
+ */
+function toggleYLock(e) {
+    if (lockYMovement) {
+        lockYMovement = false;
+        e.target.innerHTML = "y movement: unlocked";
+    } else {
+        lockYMovement = true;
+        e.target.innerHTML = "y movement: locked";
+    }
 }
 
 function setupDebugDropdown() {
