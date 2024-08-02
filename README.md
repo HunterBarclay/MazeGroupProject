@@ -6,7 +6,7 @@ This is a group project for CS464. Team is Hunter Barclay, Josh Martin, Jordan C
 Following on-screen instructions in the top-left for controls.
 
 ### GitHub Pages
-The project's `main` branch is hosted with GitHub pages [here](https://kyrovibe.github.io/MazeGroupProject/).
+The project's `main` branch is hosted with GitHub pages [here](https://hunterbarclay.github.io/MazeGroupProject/).
 
 ### Self Hosting
 This web app can be used with a simple http server and accessed by most if not all web browsers.
